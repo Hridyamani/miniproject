@@ -2,9 +2,11 @@
   "name": "staysphere-frontend",
   "version": "1.0.0",
   "scripts": {
-    "start": "npx serve .",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "start": "ng serve",
+  "build": "ng build",
+  "start:prod": "npx serve dist/staysphere-frontend",
+  "test": "ng test"
+},
   "private": true,
   "dependencies": {
     "@angular/animations": "^17.0.0",

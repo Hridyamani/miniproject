@@ -121,52 +121,49 @@ h1, h2, h3, h4, h5 {
   color: var(--primary);
 }
 
-.btn-danger {
-  background: #fee2e2;
-  color: #dc2626;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all .2s;
-}
-
-.btn-danger:hover {
-    background: #fecaca;
-}
-
-.btn-success, .btn-approve {
-    background: #dcfce7;
-    color: #16a34a;
+.btn-success, .btn-approve, .btn-present {
+    background: #7c3aed; /* Primary Purple */
+    color: #ffffff;
     border: none;
-    padding: 10px 20px;
-    border-radius: 10px;
+    padding: 10px 24px;
+    border-radius: 12px;
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
-    transition: all .2s;
+    transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
 }
 
-.btn-success:hover, .btn-approve:hover {
-    background: #bbf7d0;
+.btn-success:hover, .btn-approve:hover, .btn-present:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3);
+    background: #6d28d9;
 }
 
-.btn-reject {
-    background: #fee2e2;
-    color: #dc2626;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 10px;
+.btn-danger, .btn-reject, .btn-absent {
+    background: #f5f3ff; /* Very Light Purple */
+    color: #7c3aed;
+    border: 1.5px solid #ddd6fe;
+    padding: 10px 24px;
+    border-radius: 12px;
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
-    transition: all .2s;
+    transition: all .3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.btn-reject:hover {
-    background: #fecaca;
+.btn-danger:hover, .btn-reject:hover, .btn-absent:hover {
+    background: #ffffff;
+    border-color: #7c3aed;
+    color: #5b21b6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.1);
 }
 
 /* INPUT FIELDS  */
@@ -203,8 +200,15 @@ input:focus, textarea:focus, .form-control:focus {
 }
 
 .badge-approved, .badge.success {
-    background: var(--success-bg);
-    color: var(--success);
+    background: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+}
+
+.badge-rejected, .badge.danger {
+    background: #fef2f2;
+    color: #ef4444;
+    border: 1px solid #fecaca;
 }
 
 /*  LAYOUT  */

@@ -84,20 +84,20 @@
 }
 
 .day-present {
-    background: rgba(16, 185, 129, .08);
-    border-color: rgba(16, 185, 129, .2);
-    color: #059669;
+    background: #f5f3ff;
+    border-color: #ddd6fe;
+    color: #7c3aed;
 }
 
 .day-absent {
-    background: rgba(239, 68, 68, .08);
-    border-color: rgba(239, 68, 68, .2);
-    color: #dc2626;
+    background: #fafafa;
+    border-color: #e5e7eb;
+    color: #6b7280;
 }
 
 .day-closed {
-    background: rgba(245, 158, 11, .08);
-    border-color: rgba(245, 158, 11, .2);
+    background: #fffbeb;
+    border-color: #fde68a;
     color: #d97706;
 }
 
@@ -109,11 +109,11 @@
 }
 
 .day-present .status-dot {
-    background: #059669;
+    background: var(--primary);
 }
 
 .day-absent .status-dot {
-    background: #dc2626;
+    background: #94a3b8;
 }
 
 .calendar-legend {
@@ -141,11 +141,11 @@
 }
 
 .dot.present {
-    background: #10b981;
+    background: var(--primary);
 }
 
 .dot.absent {
-    background: #ef4444;
+    background: #94a3b8;
 }
 
 .dot.closed {
@@ -194,11 +194,11 @@
 }
 
 .badge-present {
-    background: rgba(16, 185, 129, .12);
-    color: #059669;
+    background: #ede9fe;
+    color: #7c3aed;
 }
 
 .badge-absent {
-    background: rgba(239, 68, 68, .12);
-    color: #dc2626;
+    background: #f1f5f9;
+    color: #64748b;
 }

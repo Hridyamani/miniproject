@@ -27,13 +27,15 @@
 }
 
 .status-toggle .btn.active.btn-outline-success {
-    background-color: #dcfce7;
-    color: #166534;
+    background-color: #ede9fe;
+    color: #5b21b6;
+    border-color: #7c3aed;
 }
 
 .status-toggle .btn.active.btn-outline-danger {
-    background-color: #fee2e2;
-    color: #991b1b;
+    background-color: #f1f5f9;
+    color: #475569;
+    border-color: #94a3b8;
 }
 
 .loading-overlay {

@@ -25,6 +25,7 @@ router.delete('/closed-days/:id', ctrl.deleteClosedDay);
 
 // Mess Bill
 router.get('/mess-bill-data', ctrl.getMessBillData);
+router.post('/mess-inventory', ctrl.saveMessInventory);
 
 
 module.exports = router;

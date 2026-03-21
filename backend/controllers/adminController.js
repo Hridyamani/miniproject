@@ -7,6 +7,29 @@ const Notification = require('../models/Notification');
 const HostelSettings = require('../models/HostelSettings');
 const HostelClosing = require('../models/HostelClosing');
 const Archive = require('../models/Archive');
+const XLSX = require('xlsx');
+const generatePassword = require('../utils/passwordGenerator');
+const sendEmail = require('../utils/sendEmail');
+
+// Helper: Serial Generator (e.g., STU-2024-001)
+const getNextUserId = async (role) => {
+  const currentYear = new Date().getFullYear();
+  const rolePrefixes = {
+    student: 'STU',
+    faculty: 'FAC',
+    authority: 'ATH',
+    admin: 'ADM'
+  };
+  const prefix = rolePrefixes[role] || role.substring(0, 3).toUpperCase();
+
+  // Find users from this year with this specific role prefix
+  const regex = new RegExp(`^${prefix}-${currentYear}-`);
+  const count = await User.countDocuments({ role, userId: regex });
+
+  // Format as 3-digit serial
+  const serial = (count + 1).toString().padStart(3, '0');
+  return `${prefix}-${currentYear}-${serial}`;
+};
 
 // Get dashboard statistics
 exports.getDashboardStats = async (req, res) => {
@@ -121,9 +144,14 @@ exports.createUser = async (req, res) => {
   try {
     const userData = req.body;
 
-    // Auto-convert to Block Letters (Task 6)
+    // convert to Block Letters
     if (userData.department) userData.department = userData.department.toUpperCase();
     if (userData.hostelName) userData.hostelName = userData.hostelName.toUpperCase();
+
+    // Generate User ID 
+    if (!userData.userId) {
+      userData.userId = await getNextUserId(userData.role);
+    }
 
     const exists = await User.findOne({
       $or: [{ userId: userData.userId }, { email: userData.email }]
@@ -131,9 +159,47 @@ exports.createUser = async (req, res) => {
 
     if (exists) return res.status(400).json({ message: 'User ID or Email already exists' });
 
+    // Auto-Generate Password
+    const rawPassword = generatePassword();
+    userData.password = rawPassword;
+
     const user = new User(userData);
-    await user.save();
-    res.json({ success: true, message: 'User created successfully', user: { userId: user.userId, name: user.name } });
+    await user.save(); 
+
+    // Send Credentials via Email
+    let emailSent = true;
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: 'Your Hostel Management Account Details',
+        message: `Hello ${user.name},\n\nYour account has been created.\n\nUser ID: ${user.userId}\nPassword: ${rawPassword}\n\nPlease log in and change your password after first login.\n\nLogin URL: ${process.env.FRONTEND_URL || 'http://localhost:4200'}\n\nThank you.`,
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+            <h2 style="color: #2563eb;">Welcome to StaySphere!</h2>
+            <p>Hello <strong>${user.name}</strong>,</p>
+            <p>Your account has been created by the administrator.</p>
+            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 5px 0;"><strong>User ID:</strong> <code style="color: #e11d48;">${user.userId}</code></p>
+              <p style="margin: 5px 0;"><strong>Password:</strong> <code style="color: #e11d48;">${rawPassword}</code></p>
+            </div>
+            <p>Please log in and change your password after your first login.</p>
+            <a href="${process.env.FRONTEND_URL || 'http://localhost:4200'}" style="display: inline-block; background: #2563eb; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 10px;">Login Now</a>
+            <p style="margin-top: 20px; font-size: 13px; color: #64748b;">If you did not expect this, please contact the hostel admin.</p>
+          </div>
+        `
+      });
+    } catch (err) {
+      console.error('Email failed to send:', err);
+      emailSent = false;
+    }
+
+    res.json({ 
+      success: true, 
+      message: emailSent 
+        ? 'User created successfully and email sent.' 
+        : 'User created, but credential email failed to send.',
+      user: { userId: user.userId, name: user.name } 
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -144,11 +210,10 @@ exports.updateUser = async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
-    // convert to Block Letters (Task 6)
+    // convert to Block Letters
     if (updates.department) updates.department = updates.department.toUpperCase();
     if (updates.hostelName) updates.hostelName = updates.hostelName.toUpperCase();
 
-    // Don't update password through this route unless explicitly provided and hashed
     if (updates.password) {
       const bcrypt = require('bcryptjs');
       const salt = await bcrypt.genSalt(10);
@@ -166,7 +231,7 @@ exports.updateUser = async (req, res) => {
   }
 };
 
-// Archive Logic (Task 5-6)
+// Archive Logic
 exports.archiveUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -204,10 +269,86 @@ exports.archiveUser = async (req, res) => {
   }
 };
 
+exports.bulkArchiveUsers = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !ids.length) return res.status(400).json({ message: 'No IDs provided' });
+
+    const users = await User.find({ _id: { $in: ids } });
+    if (!users.length) return res.status(404).json({ message: 'No users found to archive' });
+
+    const archives = users.map(u => ({
+      originalId: u._id,
+      name: u.name,
+      userId: u.userId,
+      role: u.role,
+      email: u.email,
+      phone: u.phone,
+      department: u.department,
+      roomNumber: u.roomNumber,
+      hostelName: u.hostelName,
+      admissionNo: u.admissionNo,
+      semester: u.semester,
+      guardiansName: u.guardiansName,
+      guardiansPhone: u.guardiansPhone,
+      address: u.address,
+      collegeName: u.collegeName,
+      gender: u.gender,
+      bloodGroup: u.bloodGroup,
+      dateOfBirth: u.dateOfBirth,
+      dateOfAdmission: u.dateOfAdmission,
+      data: u.toObject()
+    }));
+
+    await Archive.insertMany(archives);
+    await User.deleteMany({ _id: { $in: ids } });
+
+    res.json({ success: true, message: `${users.length} users moved to archive.` });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 exports.getArchives = async (req, res) => {
   try {
     const archives = await Archive.find().sort({ archivedAt: -1 });
     res.json({ success: true, archives });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.restoreArchive = async (req, res) => {
+  try {
+    const archive = await Archive.findById(req.params.id);
+    if (!archive) return res.status(404).json({ message: 'Archive entry not found' });
+
+    // Restore user from the data
+    const userData = archive.data;
+    const user = new User(userData);
+    await user.save();
+    
+    await Archive.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: `Record restored for ${user.name}` });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.bulkRestoreArchives = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !ids.length) return res.status(400).json({ message: 'No IDs provided' });
+
+    const archives = await Archive.find({ _id: { $in: ids } });
+    if (!archives.length) return res.status(404).json({ message: 'Archives not found' });
+
+    const usersToRestore = archives.map(a => a.data);
+    
+    await User.insertMany(usersToRestore);
+    await Archive.deleteMany({ _id: { $in: ids } });
+
+    res.json({ success: true, message: `${archives.length} records restored.` });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -222,12 +363,32 @@ exports.deleteArchive = async (req, res) => {
   }
 };
 
+exports.bulkDeleteArchives = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    await Archive.deleteMany({ _id: { $in: ids } });
+    res.json({ success: true, message: `${ids.length} archive records removed permanently.` });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 exports.deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
     const user = await User.findByIdAndDelete(id);
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json({ success: true, message: 'User deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.bulkDeleteUsers = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    await User.deleteMany({ _id: { $in: ids } });
+    res.json({ success: true, message: `${ids.length} users removed permanently.` });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -280,7 +441,7 @@ exports.getMessCuts = async (req, res) => {
   }
 };
 
-// Security Settings — update credentials + hostel settings
+// Security Settings 
 exports.updateSecuritySettings = async (req, res) => {
   try {
     const { email, password, locationCoordinates, returnRadius, minMessCutDays, openTime, closeTime, foodPreferenceWindow } = req.body;
@@ -380,9 +541,6 @@ exports.transferAdmin = async (req, res) => {
     newAdmin.hostelName = currentAdmin.hostelName;
     await newAdmin.save();
 
-    currentAdmin.role = 'faculty'; // Demote current admin to faculty
-    await currentAdmin.save();
-
     res.json({ success: true, message: `Admin role transferred to ${newAdmin.name}` });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -407,7 +565,7 @@ exports.publishNotification = async (req, res) => {
   }
 };
 
-// Get all notifications (admin view)
+// Get all notifications 
 exports.getNotifications = async (req, res) => {
   try {
     const notifications = await Notification.find({ sender: req.user._id })
@@ -463,5 +621,221 @@ exports.deleteHostelClosing = async (req, res) => {
     res.json({ success: true, message: 'Hostel closing record removed.' });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+// Bulk Student Upload
+exports.downloadStudentTemplate = (req, res) => {
+  const headers = [
+    'User ID', 'Full Name', 'Email', 'Phone', 'Department', 'DOB', 
+    'Blood Group', 'College Name', 'Hostel Name', 'Room Number', 
+    'Admission No', 'Semester', 'Guardian Name', 'Guardian Phone', 'Address'
+  ];
+  
+  const sampleData = [
+    {
+      'User ID': 'STD-2026-001',
+      'Full Name': 'John Doe',
+      'Email': 'john@example.com',
+      'Phone': '9876543210',
+      'Department': 'CSE',
+      'DOB': '2005-01-01',
+      'Blood Group': 'O+',
+      'College Name': 'CEC',
+      'Hostel Name': 'MENS HOSTEL',
+      'Room Number': '101',
+      'Admission No': 'ADM123',
+      'Semester': 'S1',
+      'Guardian Name': 'Parent Doe',
+      'Guardian Phone': '9876543211',
+      'Address': 'Sample Address'
+    }
+  ];
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(sampleData, { header: headers });
+  XLSX.utils.book_append_sheet(wb, ws, 'Students');
+  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', 'attachment; filename=Student_Upload_Template.xlsx');
+  res.send(buffer);
+};
+
+exports.previewBulkStudents = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const workbook = XLSX.read(req.file.buffer, { type: 'buffer', cellDates: true });
+    const sheetName = workbook.SheetNames[0];
+    const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+    const results = [];
+    const emails = new Set();
+    const admissionNos = new Set();
+    const userIds = new Set();
+
+    // Fetch existing data for duplicate checks
+    const existingUsers = await User.find({ role: 'student' }).select('email admissionNo userId');
+    const dbEmails = new Set(existingUsers.map(u => u.email.toLowerCase()));
+    const dbAdmissionNos = new Set(existingUsers.map(u => u.admissionNo?.toLowerCase()));
+    const dbUserIds = new Set(existingUsers.map(u => u.userId.toLowerCase()));
+    for (const row of data) {
+      let userId = row['User ID']?.toString().trim();
+      const admissionNo = row['Admission No']?.toString().trim();
+
+      // Auto-generate User ID if missing 
+      if (!userId) {
+        userId = await getNextUserId('student');
+      }
+
+      const student = {
+        userId,
+        name: row['Full Name']?.toString().trim(),
+        email: row['Email']?.toString().trim().toLowerCase(),
+        phone: row['Phone']?.toString().trim(),
+        department: row['Department']?.toString().trim().toUpperCase(),
+        dateOfBirth: row['DOB'],
+        bloodGroup: row['Blood Group']?.toString().trim().toUpperCase(),
+        collegeName: row['College Name']?.toString().trim(),
+        hostelName: row['Hostel Name']?.toString().trim().toUpperCase(),
+        roomNumber: row['Room Number']?.toString().trim(),
+        admissionNo,
+        semester: row['Semester']?.toString().trim().toUpperCase(),
+        guardiansName: row['Guardian Name']?.toString().trim(),
+        guardiansPhone: row['Guardian Phone']?.toString().trim(),
+        address: row['Address']?.toString().trim(),
+        role: 'student'
+      };
+
+      const errors = [];
+      
+      // Auto-Generate Password
+      student.password = generatePassword();
+      const rawPlainPassword = student.password; // temporary store for email content in preview? 
+      // Actually we send email after confirm.
+      
+      // Mandatory Fields check
+      if (!student.userId) errors.push('User ID generation failed');
+      if (!student.name) errors.push('Full Name is missing');
+      if (!student.email) errors.push('Email is missing');
+      if (!student.phone) errors.push('Phone is missing');
+      if (!student.admissionNo) errors.push('Admission No is missing');
+      if (!student.semester) errors.push('Semester is missing');
+
+      // Email Format check
+      if (student.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(student.email)) {
+        errors.push('Invalid email format');
+      }
+
+      // Semester format check
+      if (student.semester && !/^S[1-8]$/.test(student.semester)) {
+        errors.push('Semester must be S1-S8');
+      }
+
+      // Blood Group validation (optional, can be stricter)
+      const validBG = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+      if (student.bloodGroup && !validBG.includes(student.bloodGroup)) {
+        errors.push('Invalid blood group');
+      }
+
+      // Duplicate check (File scope)
+      if (student.email && emails.has(student.email)) errors.push('Duplicate Email in file');
+      if (student.admissionNo && admissionNos.has(student.admissionNo.toLowerCase())) errors.push('Duplicate Admission No in file');
+      if (student.userId && userIds.has(student.userId.toLowerCase())) errors.push('Duplicate User ID in file');
+
+      // Duplicate check (Database scope)
+      if (student.email && dbEmails.has(student.email)) errors.push('Email already exists in database');
+      if (student.admissionNo && dbAdmissionNos.has(student.admissionNo.toLowerCase())) errors.push('Admission No exists in database');
+      if (student.userId && dbUserIds.has(student.userId.toLowerCase())) errors.push('User ID exists in database');
+
+      if (student.email) emails.add(student.email);
+      if (student.admissionNo) admissionNos.add(student.admissionNo.toLowerCase());
+      if (student.userId) userIds.add(student.userId.toLowerCase());
+
+      results.push({
+        ...student,
+        status: errors.length === 0 ? 'valid' : 'invalid',
+        error: errors.join(', ')
+      });
+    }
+
+    res.json({ success: true, preview: results });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.confirmBulkUpload = async (req, res) => {
+  try {
+    const { students } = req.body;
+    if (!students || !Array.isArray(students)) {
+      return res.status(400).json({ message: 'No student data provided' });
+    }
+
+    const validStudents = students.filter(s => s.status === 'valid');
+    if (validStudents.length === 0) {
+      return res.status(400).json({ message: 'No valid student data to save' });
+    }
+
+    // Process students: assign real passwords and User IDs if they became stale
+    // Actually preview already has them.
+    const toSave = [];
+    const emailsToNotify = [];
+
+    for (const s of validStudents) {
+      const rawPassword = generatePassword(); // Final random password
+      const { status, error, ...data } = s;
+      data.password = rawPassword;
+      toSave.push(data);
+      emailsToNotify.push({
+        email: data.email,
+        name: data.name,
+        userId: data.userId,
+        password: rawPassword
+      });
+    }
+
+    await User.insertMany(toSave);
+
+    // Send emails in background
+    notifyUsers(emailsToNotify);
+
+    res.json({ 
+      success: true, 
+      message: `${toSave.length} students created successfully. Emails are being sent in background.` 
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const notifyUsers = async (users) => {
+  for (const user of users) {
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: 'Your Hostel Management Account Details',
+        message: `Hello ${user.name},\n\nYour account has been created.\n\nUser ID: ${user.userId}\nPassword: ${user.password}\n\nPlease log in and change your password after first login.\n\nLogin URL: ${process.env.FRONTEND_URL || 'http://localhost:4200'}\n\nThank you.`,
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+            <h2 style="color: #2563eb;">Welcome to StaySphere!</h2>
+            <p>Hello <strong>${user.name}</strong>,</p>
+            <p>Your account has been created by the administrator.</p>
+            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 5px 0;"><strong>User ID:</strong> <code style="color: #e11d48;">${user.userId}</code></p>
+              <p style="margin: 5px 0;"><strong>Password:</strong> <code style="color: #e11d48;">${user.password}</code></p>
+            </div>
+            <p>Please log in and change your password after your first login.</p>
+            <a href="${process.env.FRONTEND_URL || 'http://localhost:4200'}" style="display: inline-block; background: #2563eb; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 10px;">Login Now</a>
+            <p style="margin-top: 20px; font-size: 13px; color: #64748b;">If you did not expect this, please contact the hostel admin.</p>
+          </div>
+        `
+      });
+    } catch (err) {
+      console.error(`Failed to send email to ${user.email}:`, err);
+    }
   }
 };

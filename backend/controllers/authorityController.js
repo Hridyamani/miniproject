@@ -6,6 +6,7 @@ const Outgoing = require('../models/Outgoing');
 const Notification = require('../models/Notification');
 const HostelClosedDay = require('../models/HostelClosedDay');
 const HostelClosing = require('../models/HostelClosing');
+const MessInventory = require('../models/MessInventory');
 
 
 // Get pending requests 
@@ -79,7 +80,7 @@ exports.markAttendance = async (req, res) => {
     const markingDate = date ? new Date(date) : new Date();
     markingDate.setHours(0, 0, 0, 0);
 
-    // Check if hostel is closed on this date
+    // Check if hostel is closed on the date
     const isClosed = await HostelClosing.findOne({
       startDate: { $lte: markingDate },
       endDate: { $gte: markingDate }
@@ -356,7 +357,47 @@ exports.getMessBillData = async (req, res) => {
       };
     });
 
-    res.json({ success: true, data });
+    // Get Left-Out Logic
+    const currMonth = parseInt(month);
+    const currYear = parseInt(year);
+
+    // Calculate Previous Month
+    let prevMonth = currMonth - 1;
+    let prevYear = currYear;
+    if (prevMonth === 0) {
+      prevMonth = 12;
+      prevYear = currYear - 1;
+    }
+
+    const [prevInventory, currentInventory] = await Promise.all([
+      MessInventory.findOne({ month: prevMonth, year: prevYear }),
+      MessInventory.findOne({ month: currMonth, year: currYear })
+    ]);
+
+    res.json({ 
+      success: true, 
+      data, 
+      previousLeftOut: prevInventory ? prevInventory.leftOutAmount : 0,
+      currentLeftOut: currentInventory ? currentInventory.leftOutAmount : 0
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+exports.saveMessInventory = async (req, res) => {
+  try {
+    const { month, year, leftOutAmount } = req.body;
+    if (!month || !year || leftOutAmount === undefined) {
+      return res.status(400).json({ message: 'Month, year and amount are required' });
+    }
+
+    const inventory = await MessInventory.findOneAndUpdate(
+      { month: parseInt(month), year: parseInt(year) },
+      { leftOutAmount: parseFloat(leftOutAmount), updatedBy: req.user._id },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+
+    res.json({ success: true, message: 'Monthly inventory updated successfully', inventory });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

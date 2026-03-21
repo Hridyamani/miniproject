@@ -97,9 +97,19 @@
             <!-- SECTION C: Left Out Items -->
             <div *ngIf="stage === 3" class="card premium-card">
                 <div class="card-header border-bottom">
-                    <h3>Section C: Left Out Items (Reduced from total)</h3>
+                    <h3>Section C: Inventory & Left Out Items ( stock valuation )</h3>
                 </div>
                 <div class="p-4">
+                    <div class="row mb-3 bg-light p-3 rounded border align-items-center">
+                        <div class="col-md-8">
+                            <h5 class="mb-0 text-muted"><i class="bi bi-arrow-return-right"></i> Previous Month Left-Out (Carry Forward)</h5>
+                            <small class="text-muted">This was the remaining stock from last month, now added to current consumption.</small>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <h4 class="mb-0 text-primary">₹{{previousMonthLeftOut | number:'1.2-2'}}</h4>
+                        </div>
+                    </div>
+
                     <div class="row g-3 mb-4 entry-form bg-light p-3 rounded">
                         <div class="col-md-6"><label>Item Name</label><input type="text" class="form-control" [(ngModel)]="newLeftOut.item" placeholder="Residual Stock"></div>
                         <div class="col-md-4"><label>Amount Left (₹)</label><input type="number" class="form-control" [(ngModel)]="newLeftOut.amount"></div>

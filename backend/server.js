@@ -36,7 +36,7 @@ app.use('/api/authority', authorityRoutes);
 //  Serve Angular
 app.use(express.static(path.join(__dirname, 'dist')));
 
-// Health check
+//API Health check
 app.get('/api', (req, res) => {
   res.json({ message: 'StaySphere API running' });
 });

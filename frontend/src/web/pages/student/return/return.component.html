@@ -12,7 +12,7 @@
             <div class="content-grid">
                 <!-- GPS Card -->
                 <div class="card gps-card" [class.located]="located">
-                    <div class="gps-icon">{{ located ? '✅' : ' ' }}</div>
+                    <div class="gps-icon"><i *ngIf="located" class="bi bi-check-circle-fill" style="color: var(--primary); font-size: 48px;"></i></div>
                     <h3>GPS Verification</h3>
                     <p>You must be within the specified hostel radius to mark your return.</p>
 

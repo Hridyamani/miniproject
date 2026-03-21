@@ -7,7 +7,15 @@
             <div class="page-header">
                 <h1>User Management</h1>
                 <p> manage all system users </p>
-                <button class="btn-primary" (click)="openAddModal()">+ Add User</button>
+                <div class="header-actions">
+                    <button class="btn-primary" (click)="openAddModal()">+ Add User</button>
+                    <button class="btn-outline" (click)="openBulkUpload()">
+                        <i class="bi bi-file-earmark-arrow-up"></i> Bulk Upload
+                    </button>
+                    <a href="http://localhost:5000/api/admin/students/download-template" download class="btn-download" title="Download Template">
+                        <i class="bi bi-download"></i> Template
+                    </a>
+                </div>
             </div>
 
             <!-- Search + Filter -->
@@ -31,11 +39,32 @@
                 </div>
             </div>
 
+            <!-- Bulk Action Bar -->
+            <div class="selection-bar animate-fade-in" *ngIf="selectedIds.size > 0">
+                <div class="selection-info">
+                    <span class="count">{{ selectedIds.size }}</span> users selected
+                </div>
+                <div class="selection-actions">
+                    <button class="btn-bulk archive" (click)="bulkArchive()">
+                        <i class="bi bi-archive"></i> Archive Selected
+                    </button>
+                    <button class="btn-bulk delete" (click)="bulkDelete()">
+                        <i class="bi bi-trash"></i> Delete Permanent
+                    </button>
+                    <button class="btn-bulk cancel" (click)="selectedIds.clear()">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+
             <!-- Users Table -->
             <div class="card">
                 <table class="table">
                     <thead>
                         <tr>
+                            <th>
+                                <input type="checkbox" (change)="toggleAll($event)" [checked]="isAllSelected()" />
+                            </th>
                             <th>User ID</th>
                             <th>Name</th>
                             <th>Role</th>
@@ -50,7 +79,10 @@
                         <tr *ngIf="filtered.length === 0">
                             <td colspan="8" class="empty-td">No users found.</td>
                         </tr>
-                        <tr *ngFor="let u of filtered">
+                        <tr *ngFor="let u of filtered" [class.selected]="selectedIds.has(u._id)">
+                            <td>
+                                <input type="checkbox" (change)="toggleSelection(u._id)" [checked]="selectedIds.has(u._id)" />
+                            </td>
                             <td class="mono">{{ u.userId }}</td>
                             <td>{{ u.name }}</td>
                             <td><span [class]="'role-badge role-' + u.role">{{ u.role | titlecase }}</span></td>
@@ -117,10 +149,11 @@
                                         <input class="form-control" formControlName="phone"
                                             placeholder="Phone number" />
                                     </div>
-                                    <div class="form-group" *ngIf="!editMode">
-                                        <label>Password *</label>
-                                        <input type="password" class="form-control" formControlName="password"
-                                            placeholder="Initial password" />
+                                    <div class="form-group full-width">
+                                        <div class="info-notice">
+                                            <i class="bi bi-info-circle"></i>
+                                            Password will be auto-generated and sent to the user via email instantly.
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -324,6 +357,72 @@
                         <button class="btn-outline" (click)="showViewModal = false">Close</button>
                         <button class="btn-primary-fancy" (click)="showViewModal = false; openEdit(selectedUser)">
                             <i class="bi bi-pencil"></i> Edit Profile
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bulk Upload Modal -->
+            <div class="modal-overlay" *ngIf="showBulkModal">
+                <div class="modal bulk-modal">
+                    <div class="modal-header">
+                        <h3>Bulk Student Upload</h3>
+                        <button class="btn-close" (click)="showBulkModal = false">×</button>
+                    </div>
+
+                    <div class="modal-body">
+                        <input type="file" (change)="onFileSelected($event)" accept=".xlsx, .xls" #fileInput hidden />
+                        
+                        <div class="upload-zone" *ngIf="!bulkStudents.length">
+                            <i class="bi bi-cloud-arrow-up"></i>
+                            <p>Upload Excel file containing student data</p>
+                            <button class="btn-upload-select" (click)="fileInput.click()" [disabled]="uploading">
+                                {{ uploading ? 'Processing...' : 'Select Excel File' }}
+                            </button>
+                            <p class="helper-text">Only .xlsx or .xls files supported.</p>
+                        </div>
+
+                        <div class="preview-zone" *ngIf="bulkStudents.length">
+                            <div class="stats-ribbon">
+                                <span class="badge valid"><i class="bi bi-check-circle"></i> {{ validCount }} Valid</span>
+                                <span class="badge invalid"><i class="bi bi-x-circle"></i> {{ invalidCount }} Errors</span>
+                                <button class="btn-reset" (click)="fileInput.click()">Re-upload</button>
+                            </div>
+
+                            <div class="preview-table-wrapper">
+                                <table class="table preview-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Email</th>
+                                            <th>Admission No</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr *ngFor="let s of bulkStudents" [class.row-error]="s.status === 'invalid'">
+                                            <td>{{ s.name }}</td>
+                                            <td>{{ s.email }}</td>
+                                            <td>{{ s.admissionNo }}</td>
+                                            <td>
+                                                <span class="status-tag" [class]="s.status">
+                                                    {{ s.status === 'valid' ? '✅ Ready' : '❌ Error' }}
+                                                </span>
+                                                <div class="error-detail" *ngIf="s.error">{{ s.error }}</div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div *ngIf="uploadError" class="error-msg text-center">{{ uploadError }}</div>
+                    </div>
+
+                    <div class="modal-actions" *ngIf="bulkStudents.length">
+                        <button type="button" class="btn-cancel" (click)="showBulkModal = false" [disabled]="uploading">Cancel</button>
+                        <button type="button" class="btn-save" [disabled]="uploading || validCount === 0" (click)="confirmBulkUpload()">
+                            {{ uploading ? 'Processing & Sending Emails...' : 'Import ' + validCount + ' Students' }}
                         </button>
                     </div>
                 </div>

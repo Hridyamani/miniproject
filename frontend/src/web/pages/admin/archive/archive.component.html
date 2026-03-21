@@ -11,11 +11,32 @@
                 </div>
             </div>
 
+            <!-- Bulk Action Bar -->
+            <div class="selection-bar animate-fade-in" *ngIf="selectedIds.size > 0">
+                <div class="selection-info">
+                    <span class="count">{{ selectedIds.size }}</span> records selected
+                </div>
+                <div class="selection-actions">
+                    <button class="btn-bulk restore" (click)="bulkRestore()">
+                        <i class="bi bi-arrow-counterclockwise"></i> Restore Selected
+                    </button>
+                    <button class="btn-bulk delete" (click)="bulkDelete()">
+                        <i class="bi bi-trash"></i> Delete Permanent
+                    </button>
+                    <button class="btn-bulk cancel" (click)="selectedIds.clear()">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+
             <div class="card p-0 overflow-hidden mt-32">
                 <div class="table-responsive">
                     <table class="modern-table">
                         <thead>
                             <tr>
+                                <th>
+                                    <input type="checkbox" (change)="toggleAll($event)" [checked]="isAllSelected()" />
+                                </th>
                                 <th>Student Detail</th>
                                 <th>Dept / Hostel</th>
                                 <th>Archived date</th>
@@ -24,7 +45,10 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr *ngFor="let a of archives">
+                            <tr *ngFor="let a of archives" [class.selected]="selectedIds.has(a._id)">
+                                <td>
+                                    <input type="checkbox" (change)="toggleSelection(a._id)" [checked]="selectedIds.has(a._id)" />
+                                </td>
                                 <td>
                                     <div class="s-info">
                                         <strong>{{ a.name }}</strong>
@@ -42,9 +66,14 @@
                                     <span class="auto-del"><i class="bi bi-clock"></i> Auto-deletion enabled</span>
                                 </td>
                                 <td>
-                                    <button class="btn-del" (click)="deleteEntry(a._id)">
-                                        <i class="bi bi-trash-fill"></i>
-                                    </button>
+                                    <div class="action-btns">
+                                        <button class="btn-restore" (click)="restoreEntry(a._id)" title="Restore">
+                                            <i class="bi bi-arrow-counterclockwise"></i>
+                                        </button>
+                                        <button class="btn-del" (click)="deleteEntry(a._id)" title="Delete Permanently">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                             <tr *ngIf="archives.length === 0 && !loading">

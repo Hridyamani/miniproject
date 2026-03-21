@@ -26,8 +26,16 @@ export class UserManagementComponent implements OnInit {
   saveError = '';
   showViewModal = false;
   selectedUser: any = null;
+  selectedIds: Set<string> = new Set();
   
-  // Dynamic lists for dropdowns (Task 7)
+  // Bulk upload variables
+  showBulkModal = false;
+  bulkStudents: any[] = [];
+  uploading = false;
+  uploadError = '';
+  selectedFile: File | null = null;
+  
+  // Dynamic lists for dropdowns 
   departments: string[] = [];
   hostelNames: string[] = [];
   
@@ -40,7 +48,6 @@ export class UserManagementComponent implements OnInit {
       role: ['student', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       phone: ['', Validators.required],
-      password: [''],
       // Common extended fields
       department: [''],
       dateOfBirth: [''],
@@ -98,8 +105,62 @@ export class UserManagementComponent implements OnInit {
         this.users = r.users || []; 
         this.filterUsers();
         this.extractUniqueValues();
+        this.selectedIds.clear();
       },
       error: () => { }
+    });
+  }
+
+  // Bulk Selection Logic
+  toggleAll(event: any) {
+    if (event.target.checked) {
+      this.filtered.forEach(u => this.selectedIds.add(u._id));
+    } else {
+      this.selectedIds.clear();
+    }
+  }
+
+  toggleSelection(id: string) {
+    if (this.selectedIds.has(id)) {
+      this.selectedIds.delete(id);
+    } else {
+      this.selectedIds.add(id);
+    }
+  }
+
+  isAllSelected() {
+    return this.filtered.length > 0 && this.selectedIds.size === this.filtered.length;
+  }
+
+  bulkArchive() {
+    if (this.selectedIds.size === 0) return;
+    if (!confirm(`Are you sure you want to archive ${this.selectedIds.size} selected users?`)) return;
+
+    const ids = Array.from(this.selectedIds);
+    this.http.post<any>('http://localhost:5000/api/admin/users/bulk-archive', { ids }, this.headers).subscribe({
+      next: r => {
+        alert(r.message);
+        this.loadUsers();
+      },
+      error: err => alert(err.error?.message || 'Bulk archive failed')
+    });
+  }
+
+  bulkDelete() {
+    if (this.selectedIds.size === 0) return;
+    const count = this.selectedIds.size;
+    
+    // Safety check
+    const typed = prompt(`To permanently delete ${count} users, type "DELETE":`);
+    if (typed !== 'DELETE') return;
+
+    const ids = Array.from(this.selectedIds);
+    this.http.post<any>('http://localhost:5000/api/admin/users/bulk-delete', { ids }, this.headers).subscribe({
+      next: r => {
+        alert(r.message);
+        this.loadUsers();
+      },
+      error: err => alert(err.error?.message || 'Bulk delete failed')
     });
   }
 
@@ -138,7 +199,6 @@ export class UserManagementComponent implements OnInit {
     this.editMode = false;
     this.editId = '';
     this.userForm.reset({ role: 'student' });
-    this.userForm.get('password')?.setValidators(Validators.required);
     this.userForm.get('userId')?.disable();
     this.saveError = '';
     this.showModal = true;
@@ -148,14 +208,13 @@ export class UserManagementComponent implements OnInit {
     this.editMode = true;
     this.editId = u._id;
     this.userForm.patchValue(u);
-    // Format dates for input[type=date]
+    // Format dates for input 
     if (u.dateOfBirth) {
       this.userForm.patchValue({ dateOfBirth: new Date(u.dateOfBirth).toISOString().split('T')[0] });
     }
     if (u.dateOfAdmission) {
       this.userForm.patchValue({ dateOfAdmission: new Date(u.dateOfAdmission).toISOString().split('T')[0] });
     }
-    this.userForm.get('password')?.clearValidators();
     this.userForm.get('userId')?.disable();
     this.saveError = '';
     this.showModal = true;
@@ -196,5 +255,74 @@ export class UserManagementComponent implements OnInit {
       next: () => this.loadUsers(),
       error: () => alert('Failed to archive user.')
     });
+  }
+
+  // Bulk Upload Methods
+  downloadTemplate() {
+    window.open('http://localhost:5000/api/admin/students/download-template', '_blank');
+  }
+
+  openBulkUpload() {
+    this.showBulkModal = true;
+    this.bulkStudents = [];
+    this.uploadError = '';
+    this.selectedFile = null;
+  }
+
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      this.selectedFile = file;
+      this.previewFile();
+    }
+  }
+
+  previewFile() {
+    if (!this.selectedFile) return;
+    this.uploading = true;
+    this.uploadError = '';
+    
+    const formData = new FormData();
+    formData.append('file', this.selectedFile);
+
+    const headers = new HttpHeaders({ Authorization: `Bearer ${this.auth.userValue?.token}` });
+    
+    this.http.post<any>('http://localhost:5000/api/admin/students/preview-upload', formData, { headers }).subscribe({
+      next: r => {
+        this.bulkStudents = r.preview || [];
+        this.uploading = false;
+      },
+      error: err => {
+        this.uploadError = err.error?.message || 'Failed to parse file';
+        this.uploading = false;
+      }
+    });
+  }
+
+  confirmBulkUpload() {
+    const validOnes = this.bulkStudents.filter(s => s.status === 'valid');
+    if (validOnes.length === 0) return;
+
+    this.uploading = true;
+    this.http.post<any>('http://localhost:5000/api/admin/students/confirm-upload', { students: this.bulkStudents }, this.headers).subscribe({
+      next: r => {
+        alert(r.message);
+        this.showBulkModal = false;
+        this.uploading = false;
+        this.loadUsers();
+      },
+      error: err => {
+        this.uploadError = err.error?.message || 'Failed to upload students';
+        this.uploading = false;
+      }
+    });
+  }
+
+  get validCount() {
+    return this.bulkStudents.filter(s => s.status === 'valid').length;
+  }
+
+  get invalidCount() {
+    return this.bulkStudents.filter(s => s.status === 'invalid').length;
   }
 }

@@ -21,6 +21,7 @@ export class MessBillComponent implements OnInit {
   billingMonth: string = (new Date().getFullYear()) + '-' + (new Date().getMonth() + 1).toString().padStart(2, '0');
   bills: any[] = [];
   newItem = { type: '', shop: '', category: 'common', amount: 0, file: null };
+  previousMonthLeftOut: number = 0;
 
   // STAGE B: Common Expenses
   commonExpenses: any[] = [];
@@ -31,7 +32,7 @@ export class MessBillComponent implements OnInit {
   newLeftOut = { item: '', amount: 0 };
 
   // STAGE D: Data
-  allInmates: any[] = []; // Students + Faculty
+  allInmates: any[] = []; 
 
   // STAGE E: Results
   finalReport: any[] = [];
@@ -89,6 +90,7 @@ export class MessBillComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.allInmates = res.data || [];
+          this.previousMonthLeftOut = res.previousLeftOut || 0;
           this.stage = 4;
           this.loading = false;
         },
@@ -117,16 +119,12 @@ export class MessBillComponent implements OnInit {
     const totalNonVegMessDays = nonVegStudents.reduce((sum, i) => sum + i.messDays, 0) || 1;
     const totalAllMessDays = this.allInmates.reduce((sum, i) => sum + i.messDays, 0) || 1;
 
-    // Reductions: Minus left out from the category it belongs to? 
-    // The prompt says "minus the left out amount from total amount". 
-    // Usually left out items are common inventory.
-    const netTotalFood = (totalVegBills + totalNonVegBills + totalCommonFoodBills) - totalLeftOut;
-
-    // Per day costs
+    // Per day costs (Purchased stock this month)
     const perDayVeg = totalVegBills / totalVegMessDays;
     const perDayNonVeg = totalNonVegBills / totalNonVegMessDays;
-    // common food share (minus left out)
-    const perDayCommonFood = (totalCommonFoodBills - totalLeftOut) / totalAllMessDays;
+    
+    // common food share
+    const perDayCommonFood = (this.previousMonthLeftOut + totalCommonFoodBills - totalLeftOut) / totalAllMessDays;
     
     const perHeadCommonExp = totalCommonExp / (this.allInmates.length || 1);
 
@@ -143,7 +141,22 @@ export class MessBillComponent implements OnInit {
       };
     });
 
+    // Save current leftovers to backend
+    this.saveInventory(totalLeftOut);
+
     this.stage = 5;
+  }
+
+  saveInventory(amount: number) {
+    const data = {
+      month: this.selectedMonth,
+      year: this.selectedYear,
+      leftOutAmount: amount
+    };
+    this.http.post('http://localhost:5000/api/authority/mess-inventory', data, this.headers).subscribe({
+      next: () => console.log('Monthly leftovers saved'),
+      error: err => console.error('Failed to save leftovers:', err.error?.message)
+    });
   }
 
   printReport() {

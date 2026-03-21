@@ -735,18 +735,18 @@ exports.previewBulkStudents = async (req, res) => {
         errors.push('Semester must be S1-S8');
       }
 
-      // Blood Group validation (optional, can be stricter)
+      // Blood Group validation 
       const validBG = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
       if (student.bloodGroup && !validBG.includes(student.bloodGroup)) {
         errors.push('Invalid blood group');
       }
 
-      // Duplicate check (File scope)
+      // Duplicate check 
       if (student.email && emails.has(student.email)) errors.push('Duplicate Email in file');
       if (student.admissionNo && admissionNos.has(student.admissionNo.toLowerCase())) errors.push('Duplicate Admission No in file');
       if (student.userId && userIds.has(student.userId.toLowerCase())) errors.push('Duplicate User ID in file');
 
-      // Duplicate check (Database scope)
+      // Duplicate check 
       if (student.email && dbEmails.has(student.email)) errors.push('Email already exists in database');
       if (student.admissionNo && dbAdmissionNos.has(student.admissionNo.toLowerCase())) errors.push('Admission No exists in database');
       if (student.userId && dbUserIds.has(student.userId.toLowerCase())) errors.push('User ID exists in database');
@@ -781,7 +781,6 @@ exports.confirmBulkUpload = async (req, res) => {
     }
 
     // Process students: assign real passwords and User IDs if they became stale
-    // Actually preview already has them.
     const toSave = [];
     const emailsToNotify = [];
 

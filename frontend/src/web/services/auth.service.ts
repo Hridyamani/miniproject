@@ -6,7 +6,7 @@ import { BehaviorSubject, Observable, tap } from 'rxjs';
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = window.location.hostname === 'localhost' 
+  public apiUrl = window.location.hostname === 'localhost' 
     ? 'http://localhost:5000/api' 
     : '/api';
   private userSubject = new BehaviorSubject<any>(this.getUserFromStorage());

@@ -258,7 +258,7 @@ exports.publishNotification = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-// Get all notifications (authority view)
+// Get all notifications
 exports.getNotifications = async (req, res) => {
   try {
     const oneMonthAgo = new Date();
@@ -297,8 +297,19 @@ exports.getMessBillData = async (req, res) => {
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
-    const students = await User.find({ role: 'student', isActive: true })
-      .select('name roomNumber foodType');
+    const inmates = await User.find({ role: { $in: ['student', 'faculty'] }, isActive: true })
+      .select('name roomNumber foodType nextFoodType nextFoodTypeEffectiveDate role');
+
+    const now = new Date();
+    // Sync any food type changes that are due
+    for (let s of inmates) {
+      if (s.nextFoodTypeEffectiveDate && now >= s.nextFoodTypeEffectiveDate) {
+        s.foodType = s.nextFoodType;
+        s.nextFoodType = undefined;
+        s.nextFoodTypeEffectiveDate = undefined;
+        await s.save();
+      }
+    }
 
     const attendance = await Attendance.find({
       date: { $gte: startDate, $lte: endDate }, status: 'present'
@@ -311,13 +322,13 @@ exports.getMessBillData = async (req, res) => {
       ]
     }).select('student startDate endDate');
 
-    // Calculate present days per student
+    // Calculate present days per inmate
     const presentDays = {};
     attendance.forEach(a => {
       presentDays[a.student] = (presentDays[a.student] || 0) + 1;
     });
 
-    // Calculate mess cut days per student within the month
+    // Calculate mess cut days per inmate within the month
     const messCutDays = {};
     messCuts.forEach(mc => {
       let cutStart = new Date(Math.max(startDate, new Date(mc.startDate)));
@@ -328,7 +339,7 @@ exports.getMessBillData = async (req, res) => {
       }
     });
 
-    const data = students.map(s => {
+    const data = inmates.map(s => {
       let pDays = presentDays[s._id] || 0;
       let mCuts = messCutDays[s._id] || 0;
       let mDays = Math.max(0, pDays - mCuts);
@@ -336,11 +347,12 @@ exports.getMessBillData = async (req, res) => {
         _id: s._id,
         name: s.name,
         roomNumber: s.roomNumber,
+        role: s.role,
         foodType: s.foodType || 'non-veg',
         presentDays: pDays,
         messCuts: mCuts,
         messDays: mDays,
-        milkTakenDays: 0 // Default to 0, editable in UI
+        milkTakenDays: 0 
       };
     });
 

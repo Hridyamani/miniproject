@@ -24,16 +24,37 @@ export class SidebarComponent {
   }
 
   get canAccessMessPages(): boolean {
-    return !['Floor Secretary', 'Wing Secretary'].includes(this.authorityRole);
+    // Mess Secretary, Warden, Admin can see mess pages.
+    // Floor/Wing Secretary cannot.
+    if (['Floor Secretary', 'Wing Secretary'].includes(this.authorityRole)) return false;
+    return true;
   }
 
-  // To show 'Approvals' link at all:
-  // Need to be able to approve at least one thing.
   get canAccessApprovals(): boolean {
-    // If they can't approve anything, hide it. Actually, everyone but Floor/Wing Secretary can approve something.
-    // Wait, Hostel Secretary cannot approve Home going. Can they approve Mess cuts?
-    // "Hostel Secretary: Cannot access: Home going request approval" -> maybe they access others. Let's show it by default.
-    return !['Floor Secretary', 'Wing Secretary'].includes(this.authorityRole); 
+    // Mess Secretary, Hostel Secretary, Floor/Wing Secretary cannot see approvals.
+    if (['Mess Secretary', 'Hostel Secretary', 'Floor Secretary', 'Wing Secretary'].includes(this.authorityRole)) return false;
+    return true;
+  }
+
+  get canAccessProfiles(): boolean {
+    // Mess Secretary, Floor/Wing Secretary cannot see profile pages.
+    if (['Mess Secretary', 'Floor Secretary', 'Wing Secretary'].includes(this.authorityRole)) return false;
+    return true;
+  }
+
+  get canAccessAttendance(): boolean {
+    // Everyone in authority can see attendance.
+    return true;
+  }
+
+  get canAccessHostelClosing(): boolean {
+    // Floor/Wing/Mess Secretary cannot see hostel closing.
+    if (['Floor Secretary', 'Wing Secretary', 'Mess Secretary'].includes(this.authorityRole)) return false;
+    return true;
+  }
+
+  get isFloorWingSecretary(): boolean {
+    return ['Floor Secretary', 'Wing Secretary'].includes(this.authorityRole);
   }
 
   logout() {

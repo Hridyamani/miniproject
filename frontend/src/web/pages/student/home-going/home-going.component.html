@@ -93,6 +93,9 @@
                                 <div class="item-meta type-badge">{{ r.recordingType === 'request' ? 'Request' : 'Direct
                                     Marking' }}</div>
                             </div>
+                            <div class="item-actions" *ngIf="r.status === 'pending' || r.status === 'approved'">
+                                <button class="btn-cancel" (click)="cancelRequest(r._id)">Cancel Request</button>
+                            </div>
                             <span [class]="'badge badge-' + r.status">{{ r.status | titlecase }}</span>
                         </div>
                     </div>

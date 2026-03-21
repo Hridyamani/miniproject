@@ -79,44 +79,7 @@
                     </div>
             </div>
 
-                <div class="card p-24 mb-24 food-preference-card">
-                    <h3 class="section-title">Food Preference</h3>
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <div class="info-label">Last Updated</div>
-                            <div class="info-value">{{ (user?.lastFoodTypeChangedAt | date:'longDate') || 'Never' }}</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Editing Status</div>
-                            <div class="info-value">
-                                <span class="badge" [ngStyle]="{'background': isWindowOpen ? 'green' : 'red', 'color': 'white'}">
-                                    {{ isWindowOpen ? 'OPEN' : 'LOCKED' }}
-                                </span>
-                            </div>
-                        </div>
-                        <div class="info-item full-width mt-16" *ngIf="isWindowOpen">
-                             <div class="radio-group" style="display: flex; gap: 15px; margin-bottom: 10px;">
-                                 <label><input type="radio" name="foodType" value="veg" [(ngModel)]="editingFoodType"> Veg</label>
-                                 <label><input type="radio" name="foodType" value="non-veg" [(ngModel)]="editingFoodType"> Non-Veg</label>
-                             </div>
-                             <button class="btn-primary" (click)="updateFoodPreference()" style="padding: 8px 16px; border-radius: 4px;">Save Preference</button>
-                             <div *ngIf="foodMsg" [ngClass]="foodMsgType === 'success' ? 'text-success' : 'text-danger'" style="margin-top: 10px;">{{foodMsg}}</div>
-                        </div>
-                        <div class="info-item full-width mt-16" *ngIf="!isWindowOpen">
-                             <div class="info-label">Selected Option</div>
-                             <div class="info-value" style="opacity: 0.7;">{{ user?.foodType | uppercase }} (disabled)</div>
-                             
-                             <p class="text-muted mt-10" *ngIf="!isDurationValid" style="color: gray; font-size: 0.9em; margin-top: 5px;">
-                                 Your preference is locked for {{ durationMonths }} months. It will be valid until {{ validUntilDate | date:'mediumDate' }}. 
-                             </p>
-                             
-                             <p class="text-muted mt-10" *ngIf="foodPreferenceWindow?.startDate && foodPreferenceWindow?.endDate && isDurationValid" style="color: gray; font-size: 0.9em; margin-top: 5px;">
-                                 Food preference can only be changed between {{ foodPreferenceWindow.startDate | date:'mediumDate' }} - {{ foodPreferenceWindow.endDate | date:'mediumDate' }}. <br> 
-                                 A selection is valid for {{ durationMonths }} months.
-                             </p>
-                        </div>
-                    </div>
-                </div>
+
             </div>
         </main>
     </div>

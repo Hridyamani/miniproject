@@ -48,6 +48,8 @@ const userSchema = new mongoose.Schema({
   address: { type: String },
   authorityRole: { type: String }, // e.g. Warden, Mess Secretary, etc.
   foodType: { type: String, enum: ['veg', 'non-veg'], default: 'non-veg' },
+  nextFoodType: { type: String, enum: ['veg', 'non-veg'] },
+  nextFoodTypeEffectiveDate: { type: Date },
   lastFoodTypeChangedAt: { type: Date },
 
   // Security settings

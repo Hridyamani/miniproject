@@ -1,0 +1,67 @@
+<div class="dashboard-layout">
+    <web-sidebar [role]="'authority'"></web-sidebar>
+    <div class="main-content">
+        <web-topbar [pageTitle]="'Student Attendance Marking'"></web-topbar>
+        <main class="page-content animate-fade-in">
+            <div class="page-header d-flex justify-content-between align-items-center mb-4">
+                <div class="header-text">
+                    <h1>Student Attendance</h1>
+                    <p>Mark daily attendance for all active hostel students.</p>
+                </div>
+                <div class="date-selector d-flex align-items-center gap-3">
+                    <label class="mb-0">Date:</label>
+                    <input type="date" class="form-control w-auto" [(ngModel)]="selectedDate">
+                </div>
+            </div>
+
+            <div class="card premium-card">
+                <div class="table-responsive">
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>Student Name</th>
+                                <th>Room Number</th>
+                                <th>Department</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let s of students">
+                                <td>
+                                    <strong>{{ s.name }}</strong><br>
+                                    <small class="text-muted">{{ s.userId }}</small>
+                                </td>
+                                <td><span class="room-pill">{{ s.roomNumber }}</span></td>
+                                <td>{{ s.department }}</td>
+                                <td>
+                                    <div class="status-toggle d-flex gap-2">
+                                        <label class="btn btn-outline-success btn-sm" [class.active]="s.status === 'present'">
+                                            <input type="radio" [name]="'status-'+s._id" value="present" [(ngModel)]="s.status" class="d-none"> Present
+                                        </label>
+                                        <label class="btn btn-outline-danger btn-sm" [class.active]="s.status === 'absent'">
+                                            <input type="radio" [name]="'status-'+s._id" value="absent" [(ngModel)]="s.status" class="d-none"> Absent
+                                        </label>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr *ngIf="students.length === 0 && !loading">
+                                <td colspan="4" class="text-center p-4">No students found.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="text-end p-4 border-top">
+                    <button class="btn btn-primary btn-lg" (click)="submitAttendance()" [disabled]="students.length === 0 || saving">
+                        <span *ngIf="!saving">Submit Attendance</span>
+                        <div class="spinner-border spinner-border-sm" *ngIf="saving"></div>
+                    </button>
+                </div>
+            </div>
+            
+            <div *ngIf="loading" class="loading-overlay">
+                <div class="spinner"></div>
+            </div>
+        </main>
+    </div>
+</div>

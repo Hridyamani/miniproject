@@ -10,11 +10,11 @@ const HostelClosedDay = require('../models/HostelClosedDay');
 // Calculate distance between  GPS coordinates 
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
 
-  // Round inputs to 6 decimal places
-  lat1 = Number(lat1.toFixed(4));
-  lon1 = Number(lon1.toFixed(4));
-  lat2 = Number(lat2.toFixed(4));
-  lon2 = Number(lon2.toFixed(4));
+  // Round inputs to 6 decimal places for better precision
+  lat1 = Number(Number(lat1).toFixed(6));
+  lon1 = Number(Number(lon1).toFixed(6));
+  lat2 = Number(Number(lat2).toFixed(6));
+  lon2 = Number(Number(lon2).toFixed(6));
 
   const R = 6371000;
   const φ1 = lat1 * Math.PI / 180;
@@ -31,6 +31,16 @@ exports.getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'Profile not found' });
+    
+    // Check and apply nextFoodType if effective date has arrived
+    const now = new Date();
+    if (user.nextFoodTypeEffectiveDate && now >= user.nextFoodTypeEffectiveDate) {
+      user.foodType = user.nextFoodType;
+      user.nextFoodType = undefined;
+      user.nextFoodTypeEffectiveDate = undefined;
+      await user.save();
+    }
+
     const settings = await HostelSettings.findOne({ hostelName: user.hostelName });
     res.json({ success: true, user, foodPreferenceWindow: settings?.foodPreferenceWindow || null });
   } catch (error) {
@@ -74,7 +84,7 @@ exports.updateFoodPreference = async (req, res) => {
     const start = new Date(settings.foodPreferenceWindow.startDate);
     const end = new Date(settings.foodPreferenceWindow.endDate);
 
-    // End date is inclusive, so end of the day
+    start.setHours(0, 0, 0, 0);
     end.setHours(23, 59, 59, 999);
 
     if (now < start || now > end) {
@@ -82,23 +92,15 @@ exports.updateFoodPreference = async (req, res) => {
     }
 
     const user = await User.findById(req.user._id);
-    
-    // Check if preference duration has passed
-    const durationMonths = settings.foodPreferenceWindow.durationMonths || 3;
-    if (user.lastFoodTypeChangedAt) {
-      const validUntil = new Date(user.lastFoodTypeChangedAt);
-      validUntil.setMonth(validUntil.getMonth() + durationMonths);
-      
-      if (now < validUntil) {
-        return res.status(403).json({ message: `You can only change your preference after ${durationMonths} months from your last change.` });
-      }
-    }
 
-    user.foodType = foodType;
+    const effectiveDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    user.nextFoodType = foodType;
+    user.nextFoodTypeEffectiveDate = effectiveDate;
     user.lastFoodTypeChangedAt = now;
+    
     await user.save();
 
-    res.json({ success: true, message: 'Food preference updated successfully', user });
+    res.json({ success: true, message: 'Preference updated successfully. It will be applied from next month.', user });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -107,6 +109,32 @@ exports.updateFoodPreference = async (req, res) => {
 exports.markOutgoing = async (req, res) => {
   try {
     const { date, timeLeaving, place } = req.body;
+
+    const existing = await Outgoing.findOne({ student: req.user._id, status: 'active' });
+    if (existing) {
+      return res.status(400).json({ message: 'You already have an active outgoing record!' });
+    }
+
+    // Open hours check
+    const settings = await HostelSettings.findOne({ hostelName: req.user.hostelName });
+    if (settings) {
+      const { openTime, closeTime } = settings;
+      const now = new Date();
+      const currentH = now.getHours();
+      const currentM = now.getMinutes();
+      const currentTotal = currentH * 60 + currentM;
+
+      const [oh, om] = (openTime || '06:00').split(':').map(Number);
+      const [ch, cm] = (closeTime || '21:30').split(':').map(Number);
+      const openTotal = oh * 60 + om;
+      const closeTotal = ch * 60 + cm;
+
+      if (currentTotal < openTotal || currentTotal >= closeTotal) {
+        return res.status(400).json({
+          message: `Hostel is currently closed (${closeTime} to ${openTime}). Outgoing can only be marked during open hours.`
+        });
+      }
+    }
 
     const now = new Date();
     const currentTime = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
@@ -123,17 +151,16 @@ exports.markOutgoing = async (req, res) => {
 
     await outgoing.save();
     res.json({ success: true, message: 'Outgoing marked successfully', outgoing });
-
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
 // Request home going 
 exports.requestHomeGoing = async (req, res) => {
   try {
     const { leaveDate, time, place, reason } = req.body;
 
-    // 1. Date Validation: must be tomorrow onwards
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const selectedDate = new Date(leaveDate);
@@ -141,25 +168,9 @@ exports.requestHomeGoing = async (req, res) => {
       return res.status(400).json({ message: 'Home-going request can only be from tomorrow onwards.' });
     }
 
-    // 2. Open Time Validation
-    const settings = await HostelSettings.findOne({ hostelName: req.user.hostelName });
-    if (settings) {
-      const { openTime, closeTime } = settings;
-      const now = new Date();
-      const currentH = now.getHours();
-      const currentM = now.getMinutes();
-      const currentTotal = currentH * 60 + currentM;
-
-      const [oh, om] = (openTime || '06:00').split(':').map(Number);
-      const [ch, cm] = (closeTime || '21:30').split(':').map(Number);
-      const openTotal = oh * 60 + om;
-      const closeTotal = ch * 60 + cm;
-
-      if (currentTotal >= openTotal && currentTotal < closeTotal) {
-        return res.status(400).json({
-          message: `Hostel is currently open (${openTime} to ${closeTime}). Please marking outgoing instead of requesting home-going.`
-        });
-      }
+    const existingHG = await HomeGoing.findOne({ student: req.user._id, status: { $in: ['active', 'pending'] } });
+    if (existingHG) {
+      return res.status(400).json({ message: 'You already have an active or pending home-going record!' });
     }
 
     const homeGoing = new HomeGoing({
@@ -179,15 +190,19 @@ exports.requestHomeGoing = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-
 };
 
 // Mark home going 
 exports.markHomeGoing = async (req, res) => {
   try {
     const { leaveDate, time, place } = req.body;
-    
-    // 1. Validation: Must be during open hours
+
+    const existingHG = await HomeGoing.findOne({ student: req.user._id, status: { $in: ['active', 'pending'] } });
+    if (existingHG) {
+      return res.status(400).json({ message: 'You already have an active or pending home-going record!' });
+    }
+
+    // Open hours check
     const settings = await HostelSettings.findOne({ hostelName: req.user.hostelName });
     if (settings) {
       const { openTime, closeTime } = settings;
@@ -226,45 +241,71 @@ exports.markHomeGoing = async (req, res) => {
   }
 };
 
+// Cancel Home-Going
+exports.cancelHomeGoing = async (req, res) => {
+  try {
+    const { requestId, cancelReason } = req.body;
+    if (!cancelReason) return res.status(400).json({ message: 'Strict Cancellation reason is required.' });
+
+    const homeGoing = await HomeGoing.findById(requestId);
+    if (!homeGoing) return res.status(404).json({ message: 'Record not found' });
+    if (homeGoing.student.toString() !== req.user._id.toString()) return res.status(403).json({ message: 'Unauthorized' });
+
+    if (['cancelled', 'returned'].includes(homeGoing.status)) {
+      return res.status(400).json({ message: 'Cannot cancel an already ' + homeGoing.status + ' record.' });
+    }
+
+    homeGoing.status = 'cancelled';
+    homeGoing.cancelReason = cancelReason;
+    await homeGoing.save();
+
+    const Notification = require('../models/Notification');
+    const authorities = await User.find({ role: 'authority', hostelName: req.user.hostelName });
+    
+    for (const auth of authorities) {
+      await Notification.create({
+        user: auth._id,
+        title: 'Home-Going Cancelled',
+        message: `${req.user.name} cancelled their home-going request. Reason: ${cancelReason}`,
+        type: 'request',
+        targetRole: 'authority'
+      });
+    }
+
+    res.json({ success: true, message: 'Home-going request cancelled successfully', homeGoing });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // Mark return
 exports.markReturn = async (req, res) => {
   try {
-
-    const { type, requestId, latitude, longitude, returnDate, returnTime } = req.body;
+    const { type, requestId, latitude, longitude } = req.body;
 
     const now = new Date();
-    const currentDate = now.toISOString().split('T')[0];
     const currentTime = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
-    // Debug
-    console.log('BODY:', req.body);
-
-    // Get hostel settings 
     const settings = await HostelSettings.findOne({ hostelName: req.user.hostelName });
 
     const HOSTEL_LAT = settings?.locationCoordinates?.latitude !== undefined
-      ? parseFloat(settings.locationCoordinates.latitude.toFixed(4))
+      ? parseFloat(settings.locationCoordinates.latitude)
       : parseFloat(process.env.HOSTEL_LAT || '9.4265');
 
     const HOSTEL_LON = settings?.locationCoordinates?.longitude !== undefined
-      ? parseFloat(settings.locationCoordinates.longitude.toFixed(4))
+      ? parseFloat(settings.locationCoordinates.longitude)
       : parseFloat(process.env.HOSTEL_LON || '76.9246');
 
     const ALLOWED_RADIUS = settings?.returnRadius || 200;
 
-    const latNum = parseFloat(parseFloat(latitude).toFixed(4));
-    const lonNum = parseFloat(parseFloat(longitude).toFixed(4));
+    const latNum = parseFloat(latitude);
+    const lonNum = parseFloat(longitude);
 
     if (isNaN(latNum) || isNaN(lonNum)) {
-      return res.status(400).json({ message: 'Invalid GPS coordinates' });
+      return res.status(400).json({ message: 'Invalid GPS coordinates accurately capturing your location.' });
     }
 
-    console.log("USER:", latNum, lonNum);
-    console.log("HOSTEL:", HOSTEL_LAT, HOSTEL_LON);
-
     const distance = calculateDistance(latNum, lonNum, HOSTEL_LAT, HOSTEL_LON);
-
-    console.log("DISTANCE:", distance);
     const isWithinPremises = distance <= ALLOWED_RADIUS;
 
     if (!isWithinPremises) {
@@ -280,25 +321,12 @@ exports.markReturn = async (req, res) => {
       record = await Outgoing.findById(requestId);
       if (!record) return res.status(404).json({ message: 'Record not found' });
 
-      // Time validation
-      const outTime = new Date(record.date);
-      const [h, m] = record.timeLeaving.split(':');
-      outTime.setHours(parseInt(h), parseInt(m));
-
-      const backTime = new Date(returnDate);
-      const [rh, rm] = (returnTime || currentTime).split(':');
-      backTime.setHours(parseInt(rh), parseInt(rm));
-
-      if (backTime < outTime) {
-        return res.status(400).json({ message: 'Return time cannot be before going time' });
-      }
-
       record = await Outgoing.findByIdAndUpdate(
         requestId,
         {
-          returnTime: returnTime || currentTime,
-          returnDate: returnDate ? new Date(returnDate) : now,
-          gpsLocation: { lat: latitude, lng: longitude },
+          returnTime: currentTime,
+          returnDate: now,
+          gpsLocation: { lat: latNum, lng: lonNum },
           status: 'returned',
           isReturned: true,
           isGpsVerified: true
@@ -309,31 +337,17 @@ exports.markReturn = async (req, res) => {
       record = await HomeGoing.findById(requestId);
       if (!record) return res.status(404).json({ message: 'Record not found' });
 
-      // Time validation
-      const outTime = new Date(record.leaveDate);
-      const [h, m] = (record.time || "00:00").split(':');
-      outTime.setHours(parseInt(h), parseInt(m));
-
-      const backTime = new Date(returnDate);
-      const [rh, rm] = (returnTime || currentTime).split(':');
-      backTime.setHours(parseInt(rh), parseInt(rm));
-
-      if (backTime < outTime) {
-        return res.status(400).json({ message: 'Return time cannot be before going time' });
-      }
-
       record = await HomeGoing.findByIdAndUpdate(
         requestId,
         {
-          returnDate: returnDate ? new Date(returnDate) : now,
-          returnTime: returnTime || currentTime,
+          returnDate: now,
+          returnTime: currentTime,
           status: 'returned',
           isReturned: true
         },
         { new: true }
       );
     }
-
 
     if (!record) {
       return res.status(404).json({ message: 'Record not found' });
@@ -342,7 +356,6 @@ exports.markReturn = async (req, res) => {
     res.json({ success: true, message: 'Return marked successfully. Welcome back!', record });
 
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -393,7 +406,7 @@ exports.requestMessCut = async (req, res) => {
       startDate: new Date(startDate),
       endDate: new Date(endDate),
       reason,
-      status: 'pending'
+      status: 'approved' // Automatically approved if all constraints are met
     });
 
     await messCut.save();
@@ -456,19 +469,39 @@ exports.getAttendance = async (req, res) => {
   }
 };
 
+// Get Notifications
 exports.getNotifications = async (req, res) => {
   try {
     const oneMonthAgo = new Date();
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
     // Return notifications
-    const notifications = await Notification.find({
+    let notifications = await Notification.find({
       $or: [
         { user: req.user._id },
         { targetRole: { $in: ['all', 'student'] } }
       ],
       createdAt: { $gte: oneMonthAgo }
     }).sort({ createdAt: -1 });
+
+    // Inject dynamic notification for food window if open
+    const settings = await HostelSettings.findOne({ hostelName: req.user.hostelName });
+    if (settings && settings.foodPreferenceWindow && settings.foodPreferenceWindow.startDate && settings.foodPreferenceWindow.endDate) {
+      const now = new Date();
+      const start = new Date(settings.foodPreferenceWindow.startDate);
+      const end = new Date(settings.foodPreferenceWindow.endDate);
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
+      if (now >= start && now <= end) {
+        notifications.unshift({
+          _id: 'food_window_open',
+          title: '🍔 Food Preference Window Open!',
+          message: `The window to update your food preference is currently open from ${start.toLocaleDateString()} to ${end.toLocaleDateString()}. Go to your dashboard to make changes.`,
+          createdAt: new Date(),
+          type: 'general'
+        });
+      }
+    }
 
     res.json({ success: true, notifications });
   } catch (error) {

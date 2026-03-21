@@ -17,6 +17,7 @@ export class AdminAttendanceComponent implements OnInit {
   report: any[] = [];
   selectedDate = new Date().toISOString().split('T')[0];
   loading = false;
+  role = this.auth.userValue?.role || 'admin';
 
   constructor(private http: HttpClient, private auth: AuthService) { }
 

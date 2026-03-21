@@ -124,6 +124,30 @@ export class HomeGoingComponent implements OnInit {
     });
   }
 
+  cancelRequest(id: string) {
+    const reason = prompt('Please provide a strict reason for cancellation:');
+    if (!reason || reason.trim() === '') {
+      alert('Cancellation reason is required.');
+      return;
+    }
+
+    this.loading = true;
+    this.http.post('http://localhost:5000/api/student/home-going/cancel', {
+      requestId: id,
+      cancelReason: reason
+    }, this.headers).subscribe({
+      next: (res: any) => {
+        alert(res.message);
+        this.loading = false;
+        this.loadRecords();
+      },
+      error: err => {
+        alert(err.error?.message || 'Failed to cancel request.');
+        this.loading = false;
+      }
+    });
+  }
+
   clearForms() {
     this.leaveDate = '';
     this.time = '';

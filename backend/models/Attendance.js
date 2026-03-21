@@ -30,4 +30,6 @@ const attendanceSchema = new mongoose.Schema({
   timestamps: true
 });
 
+attendanceSchema.index({ student: 1, date: -1 });
+
 module.exports = mongoose.model('Attendance', attendanceSchema);

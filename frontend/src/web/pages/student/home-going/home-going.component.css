@@ -231,6 +231,27 @@
     color: #059669;
 }
 
+.badge-cancelled {
+    background: rgba(220, 38, 38, .12);
+    color: #dc2626;
+}
+
+.btn-cancel {
+    background: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s;
+}
+
+.btn-cancel:hover {
+    background: #fecaca;
+}
+
 .empty-state {
     text-align: center;
     color: var(--muted);

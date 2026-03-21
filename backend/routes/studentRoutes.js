@@ -19,6 +19,7 @@ router.post('/outgoing', ctrl.markOutgoing);
 router.get('/home-going', ctrl.getHomeGoings);
 router.post('/home-going/request', ctrl.requestHomeGoing);
 router.post('/home-going/mark', ctrl.markHomeGoing);
+router.post('/home-going/cancel', ctrl.cancelHomeGoing);
 
 router.get('/mess-cut', ctrl.getMessCuts);
 router.post('/mess-cut', ctrl.requestMessCut);

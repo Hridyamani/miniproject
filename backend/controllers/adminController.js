@@ -144,7 +144,7 @@ exports.updateUser = async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
-    // Auto-convert to Block Letters (Task 6)
+    // convert to Block Letters (Task 6)
     if (updates.department) updates.department = updates.department.toUpperCase();
     if (updates.hostelName) updates.hostelName = updates.hostelName.toUpperCase();
 

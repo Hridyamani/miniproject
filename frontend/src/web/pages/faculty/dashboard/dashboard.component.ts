@@ -51,32 +51,17 @@ export class FacultyDashboardComponent implements OnInit {
 
   checkWindow() {
     let windowOpen = false;
-    this.durationMonths = this.foodPreferenceWindow?.durationMonths || 3;
 
     if (this.foodPreferenceWindow && this.foodPreferenceWindow.startDate && this.foodPreferenceWindow.endDate) {
       const start = new Date(this.foodPreferenceWindow.startDate);
       const end = new Date(this.foodPreferenceWindow.endDate);
+      start.setHours(0, 0, 0, 0);
       end.setHours(23, 59, 59, 999);
       const now = new Date();
       windowOpen = (now >= start && now <= end);
     }
 
-    if (this.user?.lastFoodTypeChangedAt) {
-      const validUntil = new Date(this.user.lastFoodTypeChangedAt);
-      validUntil.setMonth(validUntil.getMonth() + this.durationMonths);
-      this.validUntilDate = validUntil;
-      
-      const now = new Date();
-      if (now < validUntil) {
-          this.isDurationValid = false;
-      } else {
-          this.isDurationValid = true;
-      }
-    } else {
-      this.isDurationValid = true;
-    }
-
-    this.isWindowOpen = windowOpen && this.isDurationValid;
+    this.isWindowOpen = windowOpen;
   }
 
   updateFoodPreference() {

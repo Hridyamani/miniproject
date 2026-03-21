@@ -6,10 +6,10 @@
 
             <div class="stat-grid">
                 <div class="stat-card">
-                    <div class="stat-icon green"><i class="bi bi-bar-chart-fill"></i></div>
+                    <div class="stat-icon green"><i class="bi bi-calendar-check-fill"></i></div>
                     <div>
-                        <div class="stat-value">{{ attendancePercent }}%</div>
-                        <div class="stat-label">Attendance</div>
+                        <div class="stat-value">{{ attendanceDays }}</div>
+                        <div class="stat-label">Days Present</div>
                     </div>
                 </div>
                 <div class="stat-card">
@@ -20,17 +20,10 @@
                     </div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon blue"><i class="bi bi-person-walking"></i></div>
-                    <div>
-                        <div class="stat-value">{{ activeOutgoings }}</div>
-                        <div class="stat-label">Active Outgoings</div>
-                    </div>
-                </div>
-                <div class="stat-card">
                     <div class="stat-icon purple"><i class="bi bi-house-door-fill"></i></div>
                     <div>
-                        <div class="stat-value">{{ pendingHomeGoings }}</div>
-                        <div class="stat-label">Pending Home Leaves</div>
+                        <div class="stat-value" style="font-size: 20px;">{{ homeGoingStatus }}</div>
+                        <div class="stat-label">Home Going Status</div>
                     </div>
                 </div>
             </div>
@@ -75,6 +68,32 @@
                         <div class="module-footer"><span class="module-action">Mark Return →</span></div>
                     </div>
 
+                </div>
+            </section>
+
+            <section class="food-preference-section mt">
+                <h2>🍲 Food Preference</h2>
+                <div class="card premium-card p-4">
+                    <p class="mb-1">Current Active Preference: <strong><span class="badge rounded-pill" [ngClass]="user?.foodType">{{ user?.foodType | titlecase }}</span></strong></p>
+                    <p *ngIf="user?.nextFoodType" class="text-info mt-2">
+                        <i class="bi bi-info-circle-fill"></i> Pending Change: <strong>{{ user?.nextFoodType | titlecase }}</strong> 
+                        (Effective from {{ user?.nextFoodTypeEffectiveDate | date:'longDate' }})
+                    </p>
+                    
+                    <div *ngIf="isFoodWindowOpen" class="mt-3 edit-box">
+                        <label class="d-block mb-1">Change your preference for the next cycle:</label>
+                        <select class="form-control form-control-sm d-inline-block w-auto me-3" [(ngModel)]="newFoodType">
+                           <option value="veg">Veg</option>
+                           <option value="non-veg">Non-Veg</option>
+                        </select>
+                        <button class="btn btn-primary btn-sm" (click)="updateFoodPreference()">Save Preference</button>
+                        <p class="text-muted small mt-2"><i class="bi bi-clock"></i> Editing window is open until {{ foodWindow?.endDate | date:'longDate' }}.</p>
+                    </div>
+                    
+                    <div *ngIf="!isFoodWindowOpen" class="mt-3">
+                        <p class="text-danger small"><i class="bi bi-lock-fill"></i> Editing window is currently closed.</p>
+                        <p class="text-muted small" *ngIf="user?.lastFoodTypeChangedAt">Last updated: {{ user?.lastFoodTypeChangedAt | date:'mediumDate' }}</p>
+                    </div>
                 </div>
             </section>
 

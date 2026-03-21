@@ -1,0 +1,67 @@
+<div class="dashboard-layout">
+    <web-sidebar [role]="'authority'"></web-sidebar>
+    <div class="main-content">
+        <web-topbar [pageTitle]="'Faculty Attendance Marking'"></web-topbar>
+        <main class="page-content animate-fade-in">
+            <div class="page-header d-flex justify-content-between align-items-center mb-4">
+                <div class="header-text">
+                    <h1>Faculty Attendance</h1>
+                    <p>Mark daily attendance for all registered faculty members.</p>
+                </div>
+                <div class="date-selector d-flex align-items-center gap-3">
+                    <label class="mb-0">Date:</label>
+                    <input type="date" class="form-control w-auto" [(ngModel)]="selectedDate">
+                </div>
+            </div>
+
+            <div class="card premium-card">
+                <div class="table-responsive">
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>Faculty Name</th>
+                                <th>Department</th>
+                                <th>Designation</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let f of faculty">
+                                <td>
+                                    <strong>{{ f.name }}</strong><br>
+                                    <small class="text-muted">{{ f.userId }}</small>
+                                </td>
+                                <td>{{ f.department }}</td>
+                                <td><span class="badge text-bg-info text-light">{{ f.designation || 'Faculty' }}</span></td>
+                                <td>
+                                    <div class="status-toggle d-flex gap-2">
+                                        <label class="btn btn-outline-success btn-sm" [class.active]="f.status === 'present'">
+                                            <input type="radio" [name]="'status-'+f._id" value="present" [(ngModel)]="f.status" class="d-none"> Present
+                                        </label>
+                                        <label class="btn btn-outline-danger btn-sm" [class.active]="f.status === 'absent'">
+                                            <input type="radio" [name]="'status-'+f._id" value="absent" [(ngModel)]="f.status" class="d-none"> Absent
+                                        </label>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr *ngIf="faculty.length === 0 && !loading">
+                                <td colspan="4" class="text-center p-4">No faculty members found.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="text-end p-4 border-top">
+                    <button class="btn btn-primary btn-lg" (click)="submitAttendance()" [disabled]="faculty.length === 0 || saving">
+                        <span *ngIf="!saving">Submit Attendance</span>
+                        <div class="spinner-border spinner-border-sm" *ngIf="saving"></div>
+                    </button>
+                </div>
+            </div>
+            
+            <div *ngIf="loading" class="loading-overlay">
+                <div class="spinner"></div>
+            </div>
+        </main>
+    </div>
+</div>

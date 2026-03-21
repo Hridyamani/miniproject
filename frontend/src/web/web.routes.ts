@@ -49,7 +49,8 @@ export const WEB_ROUTES: Routes = [
       { path: 'notifications', loadComponent: () => import('./pages/authority/notifications/notifications.component').then(m => m.NotificationsComponent) },
       { path: 'student-profiles', loadComponent: () => import('./pages/authority/profiles/student-profiles.component').then(m => m.StudentProfilesComponent) },
       { path: 'faculty-profiles', loadComponent: () => import('./pages/authority/profiles/faculty-profiles.component').then(m => m.FacultyProfilesComponent) },
-      { path: 'attendance', loadComponent: () => import('./pages/admin/attendance/attendance-report.component').then(m => m.AdminAttendanceComponent) },
+      { path: 'student-attendance', loadComponent: () => import('./pages/authority/attendance/student-attendance.component').then(m => m.StudentAttendanceComponent) },
+      { path: 'faculty-attendance', loadComponent: () => import('./pages/authority/attendance/faculty-attendance.component').then(m => m.FacultyAttendanceComponent) },
       { path: 'hostel-closing', loadComponent: () => import('./pages/admin/hostel-closing/hostel-closing.component').then(m => m.HostelClosingComponent) },
       { path: 'mess-bill', loadComponent: () => import('./pages/authority/mess-bill/mess-bill.component').then(m => m.MessBillComponent) },
     ]

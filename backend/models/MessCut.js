@@ -24,4 +24,6 @@ const messCutSchema = new mongoose.Schema({
   timestamps: true
 });
 
+messCutSchema.index({ student: 1, status: 1 });
+
 module.exports = mongoose.model('MessCut', messCutSchema);

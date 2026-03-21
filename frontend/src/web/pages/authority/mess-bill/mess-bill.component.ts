@@ -14,28 +14,27 @@ import { AuthService } from '../../../services/auth.service';
   styleUrls: ['./mess-bill.component.css']
 })
 export class MessBillComponent implements OnInit {
-  // Expenses inputs
-  bills: any[] = [];
-  newItemName = '';
-  newItemAmount = null;
-  newItemCategory = 'common';
-  
-  milkPriceStr: string = '0';
-  cookSalaryStr: string = '0';
-  matronSalaryStr: string = '0';
-  eventsSalaryStr: string = '0';
-
-  billingMonth: string = (new Date().getFullYear()) + '-' + (new Date().getMonth() + 1).toString().padStart(2, '0');
-  
-  get selectedMonth() { return this.billingMonth.split('-')[1]; }
-  get selectedYear() { return this.billingMonth.split('-')[0]; }
-
-  // Data
-  studentsData: any[] = [];
-  finalBill: any[] = [];
-  
+  stage = 1; // 1:A, 2:B, 3:C, 4:D, 5:E
   loading = false;
-  stage = 1; // 1: Expenses, 2: Fetch Data & Review, 3: Final Bill
+
+  // STAGE A: Bills
+  billingMonth: string = (new Date().getFullYear()) + '-' + (new Date().getMonth() + 1).toString().padStart(2, '0');
+  bills: any[] = [];
+  newItem = { type: '', shop: '', category: 'common', amount: 0, file: null };
+
+  // STAGE B: Common Expenses
+  commonExpenses: any[] = [];
+  newExpense = { type: '', amount: 0 };
+
+  // STAGE C: Left Out Items
+  leftOutItems: any[] = [];
+  newLeftOut = { item: '', amount: 0 };
+
+  // STAGE D: Data
+  allInmates: any[] = []; // Students + Faculty
+
+  // STAGE E: Results
+  finalReport: any[] = [];
 
   constructor(private http: HttpClient, private auth: AuthService) {}
 
@@ -45,97 +44,119 @@ export class MessBillComponent implements OnInit {
     return { headers: new HttpHeaders({ Authorization: `Bearer ${this.auth.userValue?.token}` }) };
   }
 
+  get selectedMonth() { return this.billingMonth.split('-')[1]; }
+  get selectedYear() { return this.billingMonth.split('-')[0]; }
+
+  // Section A Actions
   addBill() {
-    if (this.newItemName && this.newItemAmount) {
-      this.bills.push({
-        name: this.newItemName,
-        amount: Number(this.newItemAmount),
-        category: this.newItemCategory
-      });
-      this.newItemName = '';
-      this.newItemAmount = null;
-      this.newItemCategory = 'common';
+    if (this.newItem.type && this.newItem.amount > 0) {
+      this.bills.push({ ...this.newItem });
+      this.newItem = { type: '', shop: '', category: 'common', amount: 0, file: null };
+    }
+  }
+  removeBill(i: number) { this.bills.splice(i, 1); }
+
+  onFileChange(event: any) {
+    if (event.target.files && event.target.files.length > 0) {
+      this.newItem.file = event.target.files[0];
     }
   }
 
-  removeBill(index: number) {
-    this.bills.splice(index, 1);
-  }
-
-  get totalVeg() { return this.bills.filter(b => b.category === 'veg').reduce((sum, b) => sum + b.amount, 0); }
-  get totalNonVeg() { return this.bills.filter(b => b.category === 'non-veg').reduce((sum, b) => sum + b.amount, 0); }
-  get totalCommonFood() { return this.bills.filter(b => b.category === 'common').reduce((sum, b) => sum + b.amount, 0); }
-  
-  get milkPrice() { return Number(this.milkPriceStr) || 0; }
-  get cookSalary() { return Number(this.cookSalaryStr) || 0; }
-  get matronSalary() { return Number(this.matronSalaryStr) || 0; }
-  get eventsSalary() { return Number(this.eventsSalaryStr) || 0; }
-  get totalCommonExpenses() { return this.cookSalary + this.matronSalary + this.eventsSalary; }
-
-  nextStage() {
-    if (this.stage === 1) {
-      this.loadData();
-    } else if (this.stage === 2) {
-      this.calculateBill();
+  // Section B Actions
+  addExpense() {
+    if (this.newExpense.type && this.newExpense.amount > 0) {
+      this.commonExpenses.push({ ...this.newExpense });
+      this.newExpense = { type: '', amount: 0 };
     }
   }
+  removeExpense(i: number) { this.commonExpenses.splice(i, 1); }
 
-  loadData() {
+  // Section C Actions
+  addLeftOut() {
+    if (this.newLeftOut.item && this.newLeftOut.amount > 0) {
+      this.leftOutItems.push({ ...this.newLeftOut });
+      this.newLeftOut = { item: '', amount: 0 };
+    }
+  }
+  removeLeftOut(i: number) { this.leftOutItems.splice(i, 1); }
+
+  // Navigation
+  goToB() { if (this.bills.length > 0) this.stage = 2; else alert('Add at least one bill'); }
+  goToC() { this.stage = 3; }
+  goToD() {
     this.loading = true;
     this.http.get<any>(`http://localhost:5000/api/authority/mess-bill-data?month=${this.selectedMonth}&year=${this.selectedYear}`, this.headers)
       .subscribe({
         next: (res) => {
-          this.studentsData = res.data || [];
-          this.stage = 2;
+          this.allInmates = res.data || [];
+          this.stage = 4;
           this.loading = false;
         },
         error: () => {
-          alert('Failed to load student data');
+          alert('Failed to load inmate data');
           this.loading = false;
         }
       });
   }
 
-  calculateBill() {
-    // 1. Student counts
-    const vegCount = this.studentsData.filter(s => s.foodType === 'veg').length || 1; 
-    const nonVegCount = this.studentsData.filter(s => s.foodType === 'non-veg').length || 1;
-    const totalStudents = this.studentsData.length || 1;
-
-    // 2. Base per day calculations (optional, but requested: "divide by student counts... gives per-day cost..."). 
-    // Wait, the prompt says "divide by student counts... Multiply by mess days". 
-    // But if we divide by count, it's per month cost per person, then we should divide by total mess days? 
-    // Wait, the prompt: "Veg total -> divided among only veg students... Non-veg total -> non-veg... This gives per-day cost". 
-    // Actually per-day cost would be Total / (Total Mess Days of all Veg students). 
+  // Section E: Final Calculation
+  calculateFinal() {
+    const totalBills = this.bills.reduce((sum, b) => sum + b.amount, 0);
+    const totalVegBills = this.bills.filter(b => b.category === 'veg').reduce((sum, b) => sum + b.amount, 0);
+    const totalNonVegBills = this.bills.filter(b => b.category === 'non-veg').reduce((sum, b) => sum + b.amount, 0);
+    const totalCommonFoodBills = this.bills.filter(b => b.category === 'common').reduce((sum, b) => sum + b.amount, 0);
     
-    // Sum of mess days for each group
-    const totalVegMessDays = this.studentsData.filter(s => s.foodType === 'veg').reduce((sum, s) => sum + s.messDays, 0) || 1;
-    const totalNonVegMessDays = this.studentsData.filter(s => s.foodType === 'non-veg').reduce((sum, s) => sum + s.messDays, 0) || 1;
-    const totalCommonMessDays = this.studentsData.reduce((sum, s) => sum + s.messDays, 0) || 1;
+    const totalLeftOut = this.leftOutItems.reduce((sum, l) => sum + l.amount, 0);
+    const totalCommonExp = this.commonExpenses.reduce((sum, e) => sum + e.amount, 0);
 
-    const perDayVeg = this.totalVeg / totalVegMessDays;
-    const perDayNonVeg = this.totalNonVeg / totalNonVegMessDays;
-    const perDayCommonFood = this.totalCommonFood / totalCommonMessDays;
+    // Filter by type
+    const vegStudents = this.allInmates.filter(i => i.foodType === 'veg');
+    const nonVegStudents = this.allInmates.filter(i => i.foodType === 'non-veg');
+
+    const totalVegMessDays = vegStudents.reduce((sum, i) => sum + i.messDays, 0) || 1;
+    const totalNonVegMessDays = nonVegStudents.reduce((sum, i) => sum + i.messDays, 0) || 1;
+    const totalAllMessDays = this.allInmates.reduce((sum, i) => sum + i.messDays, 0) || 1;
+
+    // Reductions: Minus left out from the category it belongs to? 
+    // The prompt says "minus the left out amount from total amount". 
+    // Usually left out items are common inventory.
+    const netTotalFood = (totalVegBills + totalNonVegBills + totalCommonFoodBills) - totalLeftOut;
+
+    // Per day costs
+    const perDayVeg = totalVegBills / totalVegMessDays;
+    const perDayNonVeg = totalNonVegBills / totalNonVegMessDays;
+    // common food share (minus left out)
+    const perDayCommonFood = (totalCommonFoodBills - totalLeftOut) / totalAllMessDays;
     
-    // common bill per student (flat rate per month)
-    const perStudentCommonBill = this.totalCommonExpenses / totalStudents;
+    const perHeadCommonExp = totalCommonExp / (this.allInmates.length || 1);
 
-    this.finalBill = this.studentsData.map(s => {
-      let foodPart = (s.foodType === 'veg' ? perDayVeg : perDayNonVeg) * s.messDays;
-      let commonFoodPart = perDayCommonFood * s.messDays;
-      let milkAmount = this.milkPrice * (s.milkTakenDays || 0);
-      let total = foodPart + commonFoodPart + milkAmount + perStudentCommonBill;
-
+    this.finalReport = this.allInmates.map(i => {
+      const foodBase = (i.foodType === 'veg' ? perDayVeg : perDayNonVeg) * i.messDays;
+      const commonFood = perDayCommonFood * i.messDays;
+      const total = foodBase + commonFood + perHeadCommonExp;
       return {
-        ...s,
-        foodCharge: foodPart,
-        commonFoodShare: commonFoodPart,
-        milkAmount: milkAmount,
-        commonBillShare: perStudentCommonBill,
+        ...i,
+        foodBase,
+        commonFood,
+        commonExpenses: perHeadCommonExp,
         totalAmount: total
       };
     });
 
-    this.stage = 3;
+    this.stage = 5;
+  }
+
+  printReport() {
+    let csv = 'Name,Role,Mess Days,Food Share,Common Expenses,Total\n';
+    this.finalReport.forEach(r => {
+      csv += `${r.name},${r.role},${r.messDays},${(r.foodBase + r.commonFood).toFixed(2)},${r.commonExpenses.toFixed(2)},${r.totalAmount.toFixed(2)}\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `mess-bill-${this.billingMonth}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
   }
 }

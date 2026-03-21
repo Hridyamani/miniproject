@@ -118,26 +118,29 @@
                                 <span class="p-value">{{ (user?.lastFoodTypeChangedAt | date:'mediumDate') || 'Never' }}</span>
                             </div>
                             
+                            <div *ngIf="user?.nextFoodType" class="mt-10 p-2 bg-light rounded text-center" style="background: #f0fdf4; border: 1px solid #bbf7d0;">
+                                <p class="mb-1 text-success" style="font-size: 0.85em; font-weight: 700;">
+                                    <i class="bi bi-clock-history"></i> Next Preference: <strong>{{ user.nextFoodType | uppercase }}</strong>
+                                </p>
+                                <p class="text-muted small mb-0" style="font-size: 0.75em;">Effective from: {{ user.nextFoodTypeEffectiveDate | date:'mediumDate' }}</p>
+                            </div>
+
                             <div *ngIf="isWindowOpen" class="mt-16">
                                 <div class="radio-group" style="display: flex; gap: 15px; margin-bottom: 10px;">
                                     <label><input type="radio" name="foodType" value="veg" [(ngModel)]="editingFoodType"> Veg</label>
                                     <label><input type="radio" name="foodType" value="non-veg" [(ngModel)]="editingFoodType"> Non-Veg</label>
                                 </div>
-                                <button class="btn-primary" (click)="updateFoodPreference()" style="padding: 6px 12px; border-radius: 4px; font-size: 0.9em;">Save Preference</button>
+                                <button class="btn-primary" (click)="updateFoodPreference()" style="padding: 6px 12px; border-radius: 4px; font-size: 0.9em; width: 100%;">Save Preference</button>
                                 <div *ngIf="foodMsg" [ngClass]="foodMsgType === 'success' ? 'text-success' : 'text-danger'" style="margin-top: 10px; font-size: 0.85em;">{{foodMsg}}</div>
                             </div>
 
                             <div *ngIf="!isWindowOpen" class="mt-16">
                                 <div class="p-item border-0">
                                     <span class="p-label">Selected Option</span>
-                                    <span class="p-value" style="opacity: 0.7;">{{ user?.foodType | uppercase }} (disabled)</span>
+                                    <span class="p-value" style="opacity: 1;">{{ user?.foodType | uppercase }}</span>
                                 </div>
-                                <p class="text-muted mt-10" *ngIf="!isDurationValid" style="color: gray; font-size: 0.8em; margin-top: 5px;">
-                                    Your preference is locked for {{ durationMonths }} months. Valid until {{ validUntilDate | date:'mediumDate' }}. 
-                                </p>
-                                <p class="text-muted mt-10" *ngIf="foodPreferenceWindow?.startDate && foodPreferenceWindow?.endDate && isDurationValid" style="color: gray; font-size: 0.8em; margin-top: 5px;">
-                                    Changes allowed between {{ foodPreferenceWindow.startDate | date:'mediumDate' }} - {{ foodPreferenceWindow.endDate | date:'mediumDate' }}. <br> 
-                                    Valid for {{ durationMonths }} months.
+                                <p class="text-muted mt-10" *ngIf="foodPreferenceWindow?.startDate && foodPreferenceWindow?.endDate" style="color: gray; font-size: 0.8em; margin-top: 5px;">
+                                    Changes allowed between {{ foodPreferenceWindow.startDate | date:'mediumDate' }} - {{ foodPreferenceWindow.endDate | date:'mediumDate' }}.
                                 </p>
                             </div>
                         </div>

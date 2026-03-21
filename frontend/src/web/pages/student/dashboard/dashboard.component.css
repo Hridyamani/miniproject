@@ -214,3 +214,33 @@ h2 {
     color: var(--muted);
     font-size: 14px;
 }
+
+.food-preference-section .card {
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    background: var(--card);
+}
+
+.badge {
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.badge.veg {
+    background-color: #dcfce7 !important;
+    color: #166534 !important;
+}
+
+.badge.non-veg {
+    background-color: #fee2e2 !important;
+    color: #991b1b !important;
+}
+
+.edit-box {
+    background: #f8fafc;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px dashed #cbd5e1;
+}

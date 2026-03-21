@@ -19,6 +19,7 @@ export class HostelClosingComponent implements OnInit {
   endDate = '';
   reason = '';
   saving = false;
+  role = this.auth.userValue?.role || 'admin';
 
   constructor(private http: HttpClient, private auth: AuthService) { }
 

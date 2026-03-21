@@ -37,4 +37,6 @@ const outgoingSchema = new mongoose.Schema({
   timestamps: true
 });
 
+outgoingSchema.index({ student: 1, status: 1 });
+
 module.exports = mongoose.model('Outgoing', outgoingSchema);

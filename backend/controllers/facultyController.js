@@ -9,6 +9,17 @@ const HostelClosing = require('../models/HostelClosing');
 exports.getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select('-password');
+    if (!user) return res.status(404).json({ success: false, message: 'Profile not found' });
+
+    // Check and apply nextFoodType if effective date has arrived
+    const now = new Date();
+    if (user.nextFoodTypeEffectiveDate && now >= user.nextFoodTypeEffectiveDate) {
+      user.foodType = user.nextFoodType;
+      user.nextFoodType = undefined;
+      user.nextFoodTypeEffectiveDate = undefined;
+      await user.save();
+    }
+
     const HostelSettings = require('../models/HostelSettings');
     const settings = await HostelSettings.findOne({ hostelName: user.hostelName });
     res.json({ success: true, user, foodPreferenceWindow: settings?.foodPreferenceWindow || null });
@@ -51,7 +62,7 @@ exports.updateFoodPreference = async (req, res) => {
     const start = new Date(settings.foodPreferenceWindow.startDate);
     const end = new Date(settings.foodPreferenceWindow.endDate);
 
-    // End date is inclusive, so end of the day
+    start.setHours(0, 0, 0, 0);
     end.setHours(23, 59, 59, 999);
 
     if (now < start || now > end) {
@@ -60,22 +71,15 @@ exports.updateFoodPreference = async (req, res) => {
 
     const user = await User.findById(req.user._id);
     
-    // Check if preference duration has passed
-    const durationMonths = settings.foodPreferenceWindow.durationMonths || 3;
-    if (user.lastFoodTypeChangedAt) {
-      const validUntil = new Date(user.lastFoodTypeChangedAt);
-      validUntil.setMonth(validUntil.getMonth() + durationMonths);
-      
-      if (now < validUntil) {
-        return res.status(403).json({ success: false, message: `You can only change your preference after ${durationMonths} months from your last change.` });
-      }
-    }
-
-    user.foodType = foodType;
+    // Effective date: first of next month
+    const effectiveDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    user.nextFoodType = foodType;
+    user.nextFoodTypeEffectiveDate = effectiveDate;
     user.lastFoodTypeChangedAt = now;
+    
     await user.save();
 
-    res.json({ success: true, message: 'Food preference updated successfully', user });
+    res.json({ success: true, message: 'Preference updated successfully. It will be applied from next month.', user });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -310,7 +314,7 @@ exports.getNotifications = async (req, res) => {
       createdAt: { $lt: twoWeeksAgo }
     });
 
-    const notifications = await Notification.find({
+    let notifications = await Notification.find({
       $or: [
         { user: req.user._id },
         { targetRole: 'faculty' },
@@ -318,6 +322,27 @@ exports.getNotifications = async (req, res) => {
       ],
       createdAt: { $gte: oneMonthAgo }
     }).sort({ createdAt: -1 });
+
+    // Inject dynamic notification for food window if open
+    const HostelSettings = require('../models/HostelSettings');
+    const settings = await HostelSettings.findOne({ hostelName: req.user.hostelName });
+    if (settings && settings.foodPreferenceWindow && settings.foodPreferenceWindow.startDate && settings.foodPreferenceWindow.endDate) {
+      const now = new Date();
+      const start = new Date(settings.foodPreferenceWindow.startDate);
+      const end = new Date(settings.foodPreferenceWindow.endDate);
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
+      if (now >= start && now <= end) {
+        notifications.unshift({
+          _id: 'food_window_open',
+          title: '🍔 Food Preference Window Open!',
+          message: `The window to update your food preference is currently open from ${start.toLocaleDateString()} to ${end.toLocaleDateString()}. Go to your dashboard to make changes.`,
+          createdAt: new Date(),
+          type: 'general'
+        });
+      }
+    }
+
     res.json({ success: true, notifications });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

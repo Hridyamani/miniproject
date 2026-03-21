@@ -50,11 +50,11 @@ export class ReturnComponent implements OnInit {
           this.locating = false;
         },
         err => {
-          this.msg = 'Location access denied. Please allow GPS to mark return.';
+          this.msg = 'Location access denied or timed out. Please allow GPS to mark return.';
           this.msgType = 'error';
           this.locating = false;
         },
-        { enableHighAccuracy: true }
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
       );
     } else {
       this.msg = 'Geolocation not supported.';
@@ -70,7 +70,6 @@ export class ReturnComponent implements OnInit {
     this.http.get<any>(`http://localhost:5000/api/student/${endpoint}`, this.headers).subscribe({
       next: r => {
         const all = r.outgoings || r.homeGoings || [];
-        // Pending return means status is 'active' OR 'approved' (for homegoing) and not yet returned
         this.pendingRecords = all.filter((x: any) => (x.status === 'active' || x.status === 'approved') && !x.isReturned);
         this.returnHistory = all.filter((x: any) => x.status === 'returned' || x.isReturned).slice(0, 5);
       },
@@ -87,9 +86,7 @@ export class ReturnComponent implements OnInit {
       type: this.type,
       requestId: this.selectedId,
       latitude: this.lat,
-      longitude: this.lng,
-      returnDate: this.returnDate,
-      returnTime: this.returnTime
+      longitude: this.lng
     }, this.headers).subscribe({
       next: res => {
         this.msg = res.message || 'Hostel Return Confirmed !';
@@ -99,7 +96,7 @@ export class ReturnComponent implements OnInit {
         this.loadPendingRecords();
       },
       error: err => {
-        this.msg = err.error?.message || ' Hostel Return marking failed.';
+        this.msg = err.error?.message || 'Hostel Return marking failed.';
         this.msgType = 'error';
         this.loading = false;
       }

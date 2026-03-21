@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: staysphere-fullstack
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: cd backend && npm start
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: NODE_VERSION
+        value: 18
+      - key: PORT
+        value: 5000
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
+      - key: FRONTEND_URL
+        value: https://staysphere-fullstack.onrender.com # Update this if the name is different

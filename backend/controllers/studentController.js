@@ -5,9 +5,17 @@ const HomeGoing = require('../models/HomeGoing');
 const MessCut = require('../models/MessCut');
 const Notification = require('../models/Notification');
 const HostelSettings = require('../models/HostelSettings');
+const HostelClosedDay = require('../models/HostelClosedDay');
 
 // Calculate distance between  GPS coordinates 
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
+
+  // Round inputs to 6 decimal places
+  lat1 = Number(lat1.toFixed(4));
+  lon1 = Number(lon1.toFixed(4));
+  lat2 = Number(lat2.toFixed(4));
+  lon2 = Number(lon2.toFixed(4));
+
   const R = 6371000;
   const φ1 = lat1 * Math.PI / 180;
   const φ2 = lat2 * Math.PI / 180;
@@ -23,7 +31,8 @@ exports.getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'Profile not found' });
-    res.json({ success: true, user });
+    const settings = await HostelSettings.findOne({ hostelName: user.hostelName });
+    res.json({ success: true, user, foodPreferenceWindow: settings?.foodPreferenceWindow || null });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -43,6 +52,53 @@ exports.updateProfile = async (req, res) => {
     );
 
     res.json({ success: true, user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Update Food Preference
+exports.updateFoodPreference = async (req, res) => {
+  try {
+    const { foodType } = req.body;
+    if (!['veg', 'non-veg'].includes(foodType)) {
+      return res.status(400).json({ message: 'Invalid food type' });
+    }
+
+    const settings = await HostelSettings.findOne({ hostelName: req.user.hostelName });
+    if (!settings || !settings.foodPreferenceWindow || !settings.foodPreferenceWindow.startDate || !settings.foodPreferenceWindow.endDate) {
+      return res.status(403).json({ message: 'Food preference change window is currently closed.' });
+    }
+
+    const now = new Date();
+    const start = new Date(settings.foodPreferenceWindow.startDate);
+    const end = new Date(settings.foodPreferenceWindow.endDate);
+
+    // End date is inclusive, so end of the day
+    end.setHours(23, 59, 59, 999);
+
+    if (now < start || now > end) {
+      return res.status(403).json({ message: 'Food preference change window is currently closed.' });
+    }
+
+    const user = await User.findById(req.user._id);
+    
+    // Check if preference duration has passed
+    const durationMonths = settings.foodPreferenceWindow.durationMonths || 3;
+    if (user.lastFoodTypeChangedAt) {
+      const validUntil = new Date(user.lastFoodTypeChangedAt);
+      validUntil.setMonth(validUntil.getMonth() + durationMonths);
+      
+      if (now < validUntil) {
+        return res.status(403).json({ message: `You can only change your preference after ${durationMonths} months from your last change.` });
+      }
+    }
+
+    user.foodType = foodType;
+    user.lastFoodTypeChangedAt = now;
+    await user.save();
+
+    res.json({ success: true, message: 'Food preference updated successfully', user });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -130,6 +186,27 @@ exports.requestHomeGoing = async (req, res) => {
 exports.markHomeGoing = async (req, res) => {
   try {
     const { leaveDate, time, place } = req.body;
+    
+    // 1. Validation: Must be during open hours
+    const settings = await HostelSettings.findOne({ hostelName: req.user.hostelName });
+    if (settings) {
+      const { openTime, closeTime } = settings;
+      const now = new Date();
+      const currentH = now.getHours();
+      const currentM = now.getMinutes();
+      const currentTotal = currentH * 60 + currentM;
+
+      const [oh, om] = (openTime || '06:00').split(':').map(Number);
+      const [ch, cm] = (closeTime || '21:30').split(':').map(Number);
+      const openTotal = oh * 60 + om;
+      const closeTotal = ch * 60 + cm;
+
+      if (currentTotal < openTotal || currentTotal >= closeTotal) {
+        return res.status(400).json({
+          message: `Hostel is currently closed (${closeTime} to ${openTime}). Home-going can only be marked during open hours.`
+        });
+      }
+    }
 
     const homeGoing = new HomeGoing({
       student: req.user._id,
@@ -338,7 +415,13 @@ exports.getMessCuts = async (req, res) => {
 // Get History
 exports.getOutgoings = async (req, res) => {
   try {
-    const outgoings = await Outgoing.find({ student: req.user._id }).sort({ createdAt: -1 });
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    
+    const outgoings = await Outgoing.find({ 
+      student: req.user._id,
+      createdAt: { $gte: threeMonthsAgo }
+    }).sort({ createdAt: -1 });
     res.json({ success: true, outgoings });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -347,7 +430,16 @@ exports.getOutgoings = async (req, res) => {
 
 exports.getHomeGoings = async (req, res) => {
   try {
-    const homeGoings = await HomeGoing.find({ student: req.user._id }).sort({ createdAt: -1 });
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+    const homeGoings = await HomeGoing.find({ 
+      student: req.user._id,
+      $or: [
+        { createdAt: { $gte: threeMonthsAgo } },
+        { leaveDate: { $gte: threeMonthsAgo } }
+      ]
+    }).sort({ createdAt: -1 });
     res.json({ success: true, homeGoings });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -357,7 +449,8 @@ exports.getHomeGoings = async (req, res) => {
 exports.getAttendance = async (req, res) => {
   try {
     const attendance = await Attendance.find({ student: req.user._id }).sort({ date: -1 });
-    res.json({ success: true, attendance });
+    const closedDays = await HostelClosedDay.find().sort({ date: -1 }).limit(100);
+    res.json({ success: true, attendance, closedDays });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -365,13 +458,17 @@ exports.getAttendance = async (req, res) => {
 
 exports.getNotifications = async (req, res) => {
   try {
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
     // Return notifications
     const notifications = await Notification.find({
       $or: [
         { user: req.user._id },
         { targetRole: { $in: ['all', 'student'] } }
-      ]
-    }).sort({ createdAt: -1 }).limit(30);
+      ],
+      createdAt: { $gte: oneMonthAgo }
+    }).sort({ createdAt: -1 });
 
     res.json({ success: true, notifications });
   } catch (error) {

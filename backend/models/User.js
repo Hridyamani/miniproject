@@ -44,7 +44,11 @@ const userSchema = new mongoose.Schema({
   roomNumber: { type: String },
   guardiansName: { type: String },
   guardiansPhone: { type: String },
+  branch: { type: String },
   address: { type: String },
+  authorityRole: { type: String }, // e.g. Warden, Mess Secretary, etc.
+  foodType: { type: String, enum: ['veg', 'non-veg'], default: 'non-veg' },
+  lastFoodTypeChangedAt: { type: Date },
 
   // Security settings
   resetPasswordToken: String,

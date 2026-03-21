@@ -16,7 +16,7 @@ import { AuthService } from '../../../services/auth.service';
 export class FacultyMessCutComponent implements OnInit {
   user: any;
   messCutHistory: any[] = [];
-  messCutForm = { startDate: '', endDate: '', reason: '' };
+  messCutForm = { startDate: '', endDate: '' };
 
   constructor(private http: HttpClient, private auth: AuthService) { }
 
@@ -37,10 +37,30 @@ export class FacultyMessCutComponent implements OnInit {
 
   submitMessCut() {
     if (!this.messCutForm.startDate || !this.messCutForm.endDate) return alert('Please select dates');
+
+    const start = new Date(this.messCutForm.startDate);
+    const end = new Date(this.messCutForm.endDate);
+
+    if (start >= end) {
+      return alert('Start date must be before end date.');
+    }
+
+    // Check overlaps
+    const overlap = this.messCutHistory.find(r => {
+      if (r.status === 'rejected') return false;
+      const rStart = new Date(r.startDate);
+      const rEnd = new Date(r.endDate);
+      return start <= rEnd && end >= rStart;
+    });
+
+    if (overlap) {
+      return alert(`Overlap detected: ${new Date(overlap.startDate).toLocaleDateString()} to ${new Date(overlap.endDate).toLocaleDateString()}`);
+    }
+
     this.http.post('http://localhost:5000/api/faculty/mess-cut', this.messCutForm, this.headers).subscribe({
       next: () => {
         alert('Mess cut request submitted successfully');
-        this.messCutForm = { startDate: '', endDate: '', reason: '' };
+        this.messCutForm = { startDate: '', endDate: '' };
         this.loadMessCuts();
       },
       error: (err) => alert(err.error?.message || 'Submission failed')

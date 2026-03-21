@@ -4,11 +4,12 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { SidebarComponent } from '../../../components/sidebar/sidebar.component';
 import { TopbarComponent } from '../../../components/topbar/topbar.component';
 import { AuthService } from '../../../services/auth.service';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'web-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, SidebarComponent, TopbarComponent],
+  imports: [CommonModule, SidebarComponent, TopbarComponent, RouterModule],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })

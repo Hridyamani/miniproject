@@ -45,6 +45,23 @@ export class MessCutComponent implements OnInit {
 
   submitRequest() {
     if (!this.startDate || !this.endDate) return;
+
+    // Check overlaps
+    const start = new Date(this.startDate);
+    const end = new Date(this.endDate);
+    const overlap = this.records.find(r => {
+      if (r.status === 'rejected') return false;
+      const rStart = new Date(r.startDate);
+      const rEnd = new Date(r.endDate);
+      return start <= rEnd && end >= rStart;
+    });
+
+    if (overlap) {
+      this.msg = `Overlaps with existing record (${new Date(overlap.startDate).toLocaleDateString()} to ${new Date(overlap.endDate).toLocaleDateString()})`;
+      this.msgType = 'error';
+      return;
+    }
+
     this.loading = true;
     this.msg = '';
 

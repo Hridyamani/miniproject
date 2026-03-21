@@ -23,6 +23,7 @@
 
                     <div *ngFor="let day of monthDays" class="calendar-day" [ngClass]="getAttendanceClass(day)">
                         <span class="day-num">{{ day }}</span>
+                        <!-- Show dot for present/absent -->
                         <div class="status-dot" *ngIf="getAttendanceStatus(day)"></div>
                     </div>
                 </div>
@@ -30,17 +31,8 @@
                 <div class="calendar-legend">
                     <div class="legend-item"><span class="dot present"></span> Present</div>
                     <div class="legend-item"><span class="dot absent"></span> Absent</div>
+                    <div class="legend-item"><span class="dot closed"></span> Hostel Closed</div>
                     <div class="legend-item"><span class="dot none"></span> No Data</div>
-                </div>
-            </div>
-
-            <div class="history-card card mt">
-                <h3>Recent Records</h3>
-                <div class="record-list">
-                    <div *ngFor="let r of attendanceRecords.slice(0, 10)" class="record-item">
-                        <span class="record-date">{{ r.date | date:'fullDate' }}</span>
-                        <span [class]="'badge badge-' + r.status">{{ r.status | titlecase }}</span>
-                    </div>
                 </div>
             </div>
 

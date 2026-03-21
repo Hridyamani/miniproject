@@ -26,13 +26,19 @@ export class HomeGoingComponent implements OnInit {
   markDate = new Date().toISOString().split('T')[0];
   markTime = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   markPlace = '';
+  
+  minDate = '';
 
   loading = false;
   msg = '';
   msgType = '';
   records: any[] = [];
 
-  constructor(private http: HttpClient, private auth: AuthService) { }
+  constructor(private http: HttpClient, private auth: AuthService) {
+    const tom = new Date();
+    tom.setDate(tom.getDate() + 1);
+    this.minDate = tom.toISOString().split('T')[0];
+  }
 
   ngOnInit() {
     this.loadRecords();

@@ -23,6 +23,18 @@ export class RequestApprovalComponent implements OnInit {
     return { headers: new HttpHeaders({ Authorization: `Bearer ${this.auth.userValue?.token}` }) };
   }
 
+  get authorityRole(): string {
+    return this.auth.userValue?.authorityRole || '';
+  }
+
+  get canApproveHomeGoing(): boolean {
+    return !['Hostel Secretary', 'Floor Secretary', 'Wing Secretary', 'Mess Secretary'].includes(this.authorityRole);
+  }
+
+  get canApproveMessCuts(): boolean {
+    return !['Floor Secretary', 'Wing Secretary', 'Hostel Secretary'].includes(this.authorityRole);
+  }
+
   ngOnInit() { this.load(); }
 
   load() {

@@ -19,6 +19,23 @@ export class SidebarComponent {
     return this.authService.userValue?.name || 'User';
   }
 
+  get authorityRole(): string {
+    return this.authService.userValue?.authorityRole || '';
+  }
+
+  get canAccessMessPages(): boolean {
+    return !['Floor Secretary', 'Wing Secretary'].includes(this.authorityRole);
+  }
+
+  // To show 'Approvals' link at all:
+  // Need to be able to approve at least one thing.
+  get canAccessApprovals(): boolean {
+    // If they can't approve anything, hide it. Actually, everyone but Floor/Wing Secretary can approve something.
+    // Wait, Hostel Secretary cannot approve Home going. Can they approve Mess cuts?
+    // "Hostel Secretary: Cannot access: Home going request approval" -> maybe they access others. Let's show it by default.
+    return !['Floor Secretary', 'Wing Secretary'].includes(this.authorityRole); 
+  }
+
   logout() {
     this.authService.logout();
     this.router.navigate(['/splash']);

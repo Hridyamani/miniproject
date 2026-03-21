@@ -38,7 +38,9 @@ export class FacultyProfilesComponent implements OnInit {
   filter() {
     const q = this.search.toLowerCase();
     this.filteredFaculty = this.faculty.filter(f =>
-      f.name.toLowerCase().includes(q) || f.department?.toLowerCase().includes(q) || f.userId.toLowerCase().includes(q)
+      (f.name?.toLowerCase().includes(q)) || 
+      (f.department?.toLowerCase().includes(q)) || 
+      (f.userId?.toLowerCase().includes(q))
     );
   }
 }

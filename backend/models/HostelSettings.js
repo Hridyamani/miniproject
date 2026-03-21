@@ -31,6 +31,11 @@ const hostelSettingsSchema = new mongoose.Schema({
     closeTime: {
         type: String,
         default: '21:30'
+    },
+    foodPreferenceWindow: {
+        startDate: { type: Date, default: null },
+        endDate: { type: Date, default: null },
+        durationMonths: { type: Number, default: 3 }
     }
 
 }, {

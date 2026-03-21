@@ -14,22 +14,31 @@ const generateToken = (userId, role) => {
 exports.login = async (req, res) => {
   try {
     const { userId, password, role } = req.body;
+    console.log("LOGIN ATTEMPT:", { userId, role, passwordProvided: !!password });
 
     if (!userId || !password || !role) {
+      console.log("❌ Missing fields");
       return res.status(400).json({ message: 'Please provide userId, password and role' });
     }
 
     const user = await User.findOne({ userId, role });
     if (!user) {
+      console.log("❌ User not found for userId and role:", { userId, role });
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
+    console.log("USER FOUND:", { userId: user.userId, role: user.role, isActive: user.isActive });
+
     if (!user.isActive) {
+      console.log("❌ User is inactive");
       return res.status(401).json({ message: 'Account is deactivated. Contact admin.' });
     }
 
     const isMatch = await user.matchPassword(password);
+    console.log("PASSWORD MATCH:", isMatch);
+
     if (!isMatch) {
+      console.log("❌ Password mismatch");
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
@@ -55,6 +64,7 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
 
 // Admin Registration 
 exports.registerAdmin = async (req, res) => {

@@ -26,6 +26,12 @@ export class UserManagementComponent implements OnInit {
   saveError = '';
   showViewModal = false;
   selectedUser: any = null;
+  
+  // Dynamic lists for dropdowns (Task 7)
+  departments: string[] = [];
+  hostelNames: string[] = [];
+  
+  authorityRoles = ['Warden', 'Resident Tutor', 'Hostel Secretary', 'Mess Secretary', 'Floor Secretary', 'Wing Secretary'];
 
   constructor(private fb: FormBuilder, private http: HttpClient, private auth: AuthService) {
     this.userForm = this.fb.group({
@@ -48,7 +54,8 @@ export class UserManagementComponent implements OnInit {
       dateOfAdmission: [''],
       guardiansName: [''],
       guardiansPhone: [''],
-      address: ['']
+      address: [''],
+      authorityRole: ['']
     });
 
     // Auto-generate User ID
@@ -87,9 +94,36 @@ export class UserManagementComponent implements OnInit {
   loadUsers() {
     const q = this.roleFilter ? `?role=${this.roleFilter}` : '';
     this.http.get<any>(`http://localhost:5000/api/admin/users${q}`, this.headers).subscribe({
-      next: r => { this.users = r.users || []; this.filterUsers(); },
+      next: r => { 
+        this.users = r.users || []; 
+        this.filterUsers();
+        this.extractUniqueValues();
+      },
       error: () => { }
     });
+  }
+
+  extractUniqueValues() {
+    this.departments = [...new Set(this.users.map(u => u.department).filter(d => d))].sort();
+    this.hostelNames = [...new Set(this.users.map(u => u.hostelName).filter(h => h))].sort();
+  }
+
+  addDepartment() {
+    const dept = prompt('Enter new department name:');
+    if (dept) {
+      const upper = dept.toUpperCase();
+      if (!this.departments.includes(upper)) this.departments.push(upper);
+      this.userForm.get('department')?.setValue(upper);
+    }
+  }
+
+  addHostel() {
+    const hostel = prompt('Enter new hostel name:');
+    if (hostel) {
+      const upper = hostel.toUpperCase();
+      if (!this.hostelNames.includes(upper)) this.hostelNames.push(upper);
+      this.userForm.get('hostelName')?.setValue(upper);
+    }
   }
 
   filterUsers() {
@@ -156,11 +190,11 @@ export class UserManagementComponent implements OnInit {
     this.showViewModal = true;
   }
 
-  deleteUser(id: string) {
-    if (!confirm('Are you sure you want to delete this user?')) return;
-    this.http.delete(`http://localhost:5000/api/admin/users/${id}`, this.headers).subscribe({
+  archiveUser(id: string) {
+    if (!confirm('Are you sure you want to archive this user? This will move them to the archived student store.')) return;
+    this.http.post(`http://localhost:5000/api/admin/users/${id}/archive`, {}, this.headers).subscribe({
       next: () => this.loadUsers(),
-      error: () => alert('Failed to delete user.')
+      error: () => alert('Failed to archive user.')
     });
   }
 }

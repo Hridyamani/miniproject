@@ -41,6 +41,10 @@
     gap: 24px;
 }
 
+.dashboard-card {
+    cursor: default;
+}
+
 .primary-gradient {
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     color: #fff;
@@ -256,6 +260,26 @@
     display: flex;
     align-items: center;
     gap: 6px;
+}
+
+.entry-exit-times {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.t-out {
+    color: var(--text-light);
+}
+
+.t-in {
+    color: var(--success);
+    font-weight: 700;
+}
+
+.only-out {
+    color: #eab308;
+    font-weight: 600;
 }
 
 .empty-state {

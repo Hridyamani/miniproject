@@ -19,4 +19,15 @@ router.post('/publish-notification', ctrl.publishNotification);
 router.get('/notifications', ctrl.getNotifications);
 router.delete('/notifications/:id', ctrl.deleteNotification);
 
+// Attendance & Closing
+router.get('/attendance', ctrl.getAttendanceReport);
+router.get('/hostel-closing', ctrl.getHostelClosingHistory);
+router.post('/hostel-closing', ctrl.markHostelClosing);
+router.delete('/hostel-closing/:id', ctrl.deleteHostelClosing);
+
+// Archive
+router.post('/users/:id/archive', ctrl.archiveUser);
+router.get('/archives', ctrl.getArchives);
+router.delete('/archives/:id', ctrl.deleteArchive);
+
 module.exports = router;

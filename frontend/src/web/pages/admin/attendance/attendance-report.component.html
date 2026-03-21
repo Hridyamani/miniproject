@@ -1,0 +1,73 @@
+<div class="dashboard-layout">
+    <web-sidebar [role]="'admin'"></web-sidebar>
+    <div class="main-content">
+        <web-topbar [pageTitle]="'Attendance Report'"></web-topbar>
+        <main class="page-content animate-fade-in">
+
+            <div class="page-header">
+                <div class="header-text">
+                    <h1>Student Attendance Records</h1>
+                    <p>Observe student attendance trends and faculty marking details.</p>
+                </div>
+                <div class="date-filter">
+                    <label>Filter Date:</label>
+                    <input type="date" [(ngModel)]="selectedDate" (change)="loadReport()" class="form-control" />
+                </div>
+            </div>
+
+            <div class="card p-0 overflow-hidden">
+                <div class="table-responsive">
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>Student Details</th>
+                                <th>Room</th>
+                                <th>Department</th>
+                                <th>Status</th>
+                                <th>Marked By (Role)</th>
+                            </tr>
+                        </thead>
+                        <tbody *ngIf="!loading">
+                            <tr *ngFor="let item of report">
+                                <td>
+                                    <div class="student-info">
+                                        <div class="s-avatar">{{ item.name?.substring(0,1) }}</div>
+                                        <div class="s-details">
+                                            <span class="s-name">{{ item.name }}</span>
+                                            <span class="s-id">{{ item.userId }}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="room-pill">{{ item.roomNumber }}</span></td>
+                                <td>{{ item.department || '—' }}</td>
+                                <td>
+                                    <span class="status-badge" [class.present]="item.status === 'present'"
+                                        [class.absent]="item.status === 'absent'"
+                                        [class.not-marked]="item.status === 'not marked'">
+                                        {{ item.status | titlecase }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="marked-by-col">
+                                        <strong>{{ item.markedBy }}</strong>
+                                        <span class="role-text" *ngIf="item.markedByRole !== '—'">({{ item.markedByRole |
+                                            titlecase }})</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr *ngIf="report.length === 0">
+                                <td colspan="5" class="empty-state">No attendance records for this date.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div *ngIf="loading" class="loading-overlay">
+                    <div class="spinner"></div>
+                    <span>Fetching data...</span>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>

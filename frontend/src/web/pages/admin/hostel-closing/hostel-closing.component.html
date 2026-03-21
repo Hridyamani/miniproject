@@ -1,0 +1,79 @@
+<div class="dashboard-layout">
+    <web-sidebar [role]="'admin'"></web-sidebar>
+    <div class="main-content">
+        <web-topbar [pageTitle]="'Hostel Closing Management'"></web-topbar>
+        <main class="page-content animate-fade-in">
+
+            <div class="page-header">
+                <div class="header-text">
+                    <h1>Hostel Closing Calendar</h1>
+                    <p>Mark days when the hostel is officially closed. Attendance and outgoings will be restricted.</p>
+                </div>
+            </div>
+
+            <div class="grid-2 mt-32">
+                <!-- Mark New Closing Range -->
+                <div class="card p-32">
+                    <h3>Mark New Closing Range</h3>
+                    <p class="text-muted mb-24">Set the start and end dates for the hostel closure.</p>
+
+                    <div class="form-group mb-16">
+                        <label>From Date:</label>
+                        <input type="date" [(ngModel)]="startDate" class="form-control" />
+                    </div>
+                    <div class="form-group mb-16">
+                        <label>To Date:</label>
+                        <input type="date" [(ngModel)]="endDate" class="form-control" />
+                    </div>
+                    <div class="form-group mb-24">
+                        <label>Reason / Note:</label>
+                        <textarea [(ngModel)]="reason" class="form-control" placeholder="e.g. Summer Vacation, Semester Break..."></textarea>
+                    </div>
+
+                    <button class="primary-btn w-full" [disabled]="saving || !startDate || !endDate" (click)="markClosing()">
+                        <i class="bi bi-calendar-check-fill"></i> {{ saving ? 'Saving...' : 'Lock Dates' }}
+                    </button>
+                </div>
+
+                <!-- History Table -->
+                <div class="card p-0 overflow-hidden">
+                    <div class="card-p-24 border-bottom">
+                         <h3>Closure History</h3>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="modern-table">
+                            <thead>
+                                <tr>
+                                    <th>Closing Range</th>
+                                    <th>Reason</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let h of history">
+                                    <td>
+                                        <div class="range-info">
+                                            <span class="d-text">{{ h.startDate | date:'dd MMM yyyy' }}</span>
+                                            <i class="bi bi-arrow-right arrow-icon"></i>
+                                            <span class="d-text">{{ h.endDate | date:'dd MMM yyyy' }}</span>
+                                        </div>
+                                    </td>
+                                    <td>{{ h.reason }}</td>
+                                    <td>
+                                        <button class="btn-sm text-danger" (click)="deleteRecord(h._id)">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr *ngIf="history.length === 0">
+                                    <td colspan="3" class="empty-state">No closing history records.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>

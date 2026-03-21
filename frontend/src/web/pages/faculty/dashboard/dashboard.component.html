@@ -17,7 +17,7 @@
                     <div class="stat-icon"><i class="bi bi-cup-hot-fill"></i></div>
                     <div class="stat-details">
                         <span class="stat-value">{{ stats.messCutCount }}</span>
-                        <span class="stat-label">Mess Cuts</span>
+                        <span class="stat-label">Mess Cut Days</span>
                     </div>
                 </div>
                 <div class="stat-card purple">
@@ -25,13 +25,6 @@
                     <div class="stat-details">
                         <span class="stat-value">{{ stats.homeGoingCount }}</span>
                         <span class="stat-label">Home Goings</span>
-                    </div>
-                </div>
-                <div class="stat-card green">
-                    <div class="stat-icon"><i class="bi bi-bell-fill"></i></div>
-                    <div class="stat-details">
-                        <span class="stat-value">{{ notifications.length }}</span>
-                        <span class="stat-label"> Notifications</span>
                     </div>
                 </div>
             </div>
@@ -107,6 +100,45 @@
                             <div class="p-item">
                                 <span class="p-label">Room</span>
                                 <span class="p-value">{{ user?.roomNumber || 'N/A' }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Food Preference Card -->
+                    <div class="card p-24 profile-card mt-24">
+                        <div class="section-header">
+                            <h3>Food Preference</h3>
+                            <span class="badge" [ngStyle]="{'background': isWindowOpen ? 'green' : 'red', 'color': 'white'}">
+                                {{ isWindowOpen ? 'OPEN' : 'LOCKED' }}
+                            </span>
+                        </div>
+                        <div class="profile-details mt-16">
+                            <div class="p-item">
+                                <span class="p-label">Last Updated</span>
+                                <span class="p-value">{{ (user?.lastFoodTypeChangedAt | date:'mediumDate') || 'Never' }}</span>
+                            </div>
+                            
+                            <div *ngIf="isWindowOpen" class="mt-16">
+                                <div class="radio-group" style="display: flex; gap: 15px; margin-bottom: 10px;">
+                                    <label><input type="radio" name="foodType" value="veg" [(ngModel)]="editingFoodType"> Veg</label>
+                                    <label><input type="radio" name="foodType" value="non-veg" [(ngModel)]="editingFoodType"> Non-Veg</label>
+                                </div>
+                                <button class="btn-primary" (click)="updateFoodPreference()" style="padding: 6px 12px; border-radius: 4px; font-size: 0.9em;">Save Preference</button>
+                                <div *ngIf="foodMsg" [ngClass]="foodMsgType === 'success' ? 'text-success' : 'text-danger'" style="margin-top: 10px; font-size: 0.85em;">{{foodMsg}}</div>
+                            </div>
+
+                            <div *ngIf="!isWindowOpen" class="mt-16">
+                                <div class="p-item border-0">
+                                    <span class="p-label">Selected Option</span>
+                                    <span class="p-value" style="opacity: 0.7;">{{ user?.foodType | uppercase }} (disabled)</span>
+                                </div>
+                                <p class="text-muted mt-10" *ngIf="!isDurationValid" style="color: gray; font-size: 0.8em; margin-top: 5px;">
+                                    Your preference is locked for {{ durationMonths }} months. Valid until {{ validUntilDate | date:'mediumDate' }}. 
+                                </p>
+                                <p class="text-muted mt-10" *ngIf="foodPreferenceWindow?.startDate && foodPreferenceWindow?.endDate && isDurationValid" style="color: gray; font-size: 0.8em; margin-top: 5px;">
+                                    Changes allowed between {{ foodPreferenceWindow.startDate | date:'mediumDate' }} - {{ foodPreferenceWindow.endDate | date:'mediumDate' }}. <br> 
+                                    Valid for {{ durationMonths }} months.
+                                </p>
                             </div>
                         </div>
                     </div>

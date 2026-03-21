@@ -24,7 +24,7 @@
                         <div class="form-container">
                             <div class="form-group">
                                 <label>Proposed Leave Date * (Tomorrow onwards)</label>
-                                <input type="date" class="form-control" [(ngModel)]="leaveDate" />
+                                <input type="date" class="form-control" [(ngModel)]="leaveDate" [min]="minDate" />
                             </div>
                             <div class="form-row">
                                 <div class="form-group">

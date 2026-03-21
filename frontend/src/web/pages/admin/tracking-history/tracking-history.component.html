@@ -1,0 +1,71 @@
+<div class="dashboard-layout">
+    <web-sidebar [role]="'admin'"></web-sidebar>
+    <div class="main-content">
+        <web-topbar [pageTitle]="'Entry - Exit History'"></web-topbar>
+        <main class="page-content animate-fade-in">
+            <div class="page-header">
+                <div class="header-text">
+                    <h1>Monthly Tracking Logs</h1>
+                    <p>Observe student movement trends month by month.</p>
+                </div>
+                <div class="filter-controls">
+                    <div class="f-group">
+                        <label>Month:</label>
+                        <select [(ngModel)]="selectedMonth" (change)="loadHistory()">
+                            <option *ngFor="let m of months" [value]="m.v">{{ m.n }}</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-0 overflow-hidden mt-32">
+                <div class="table-responsive">
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>Student Detail</th>
+                                <th>Type</th>
+                                <th>Date & Time</th>
+                                <th>Return Status</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let l of logs">
+                                <td>
+                                    <div class="s-info">
+                                        <strong>{{ l.student?.name }}</strong>
+                                        <small>{{ l.student?.userId }} • Room {{ l.student?.roomNumber }}</small>
+                                    </div>
+                                </td>
+                                <td><span class="badge type">{{ l.logType }}</span></td>
+                                <td>{{ l.createdAt | date:'dd MMM yyyy, HH:mm' }}</td>
+                                <td>
+                                    <span class="r-badge" [class.done]="l.status === 'returned'">
+                                        {{ l.status === 'returned' ? 'Completed' : 'Still Out' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="time-details" *ngIf="l.status === 'returned'">
+                                        <span>Out: {{ l.timeLeaving }}</span>
+                                        <span>In: {{ l.returnTime }}</span>
+                                    </div>
+                                    <div class="time-details" *ngIf="l.status !== 'returned'">
+                                        <span>Left: {{ l.timeLeaving }}</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr *ngIf="logs.length === 0 && !loading">
+                                <td colspan="5" class="empty-state">No movement logs for this month.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div *ngIf="loading" class="loader-overlay">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>

@@ -4,6 +4,9 @@ const MessCut = require('../models/MessCut');
 const HomeGoing = require('../models/HomeGoing');
 const Outgoing = require('../models/Outgoing');
 const Notification = require('../models/Notification');
+const HostelClosedDay = require('../models/HostelClosedDay');
+const HostelClosing = require('../models/HostelClosing');
+
 
 // Get pending requests 
 exports.getPendingRequests = async (req, res) => {
@@ -76,6 +79,16 @@ exports.markAttendance = async (req, res) => {
     const markingDate = date ? new Date(date) : new Date();
     markingDate.setHours(0, 0, 0, 0);
 
+    // Check if hostel is closed on this date
+    const isClosed = await HostelClosing.findOne({
+      startDate: { $lte: markingDate },
+      endDate: { $gte: markingDate }
+    });
+
+    if (isClosed) {
+      return res.status(400).json({ success: false, message: `Hostel is closed from ${isClosed.startDate.toDateString()} to ${isClosed.endDate.toDateString()}. Attendance cannot be marked.` });
+    }
+
     const results = [];
     for (const item of attendance) {
       const { student: studentId, status, remarks } = item;
@@ -112,11 +125,55 @@ exports.markAttendance = async (req, res) => {
   }
 };
 
+// Hostel Closed Days
+exports.markHostelClosed = async (req, res) => {
+  try {
+    const { date, reason } = req.body;
+    const closedDate = new Date(date);
+    closedDate.setHours(0, 0, 0, 0);
+
+    let closedDay = await HostelClosedDay.findOne({ date: closedDate });
+    if (closedDay) {
+      return res.status(400).json({ message: 'This date is already marked as closed.' });
+    }
+
+    closedDay = new HostelClosedDay({
+      date: closedDate,
+      reason: reason || 'Hostel Closed',
+      markedBy: req.user._id
+    });
+
+    await closedDay.save();
+    res.json({ success: true, message: 'Hostel marked as closed for this date', closedDay });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getHostelClosedDays = async (req, res) => {
+  try {
+    const closedDays = await HostelClosedDay.find().sort({ date: -1 }).limit(100);
+    res.json({ success: true, closedDays });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.deleteClosedDay = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await HostelClosedDay.findByIdAndDelete(id);
+    res.json({ success: true, message: 'Closed day removed' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // Get students room - wise
 exports.getStudents = async (req, res) => {
   try {
-    const students = await User.find({ role: 'student' })
-      .select('name roomNumber phone admissionNo semester collegeName hostelName userId email guardiansName guardiansPhone address')
+    const students = await User.find({ role: 'student', isActive: true })
+      .select('name roomNumber phone admissionNo semester collegeName hostelName userId email guardiansName guardiansPhone address department')
       .sort({ roomNumber: 1 });
     res.json({ success: true, students });
   } catch (error) {
@@ -204,7 +261,13 @@ exports.publishNotification = async (req, res) => {
 // Get all notifications (authority view)
 exports.getNotifications = async (req, res) => {
   try {
-    const notifications = await Notification.find({ sender: req.user._id })
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+    const notifications = await Notification.find({ 
+      sender: req.user._id,
+      createdAt: { $gte: oneMonthAgo }
+    })
       .sort({ createdAt: -1 })
       .populate('sender', 'name userId');
     res.json({ success: true, notifications });
@@ -220,6 +283,68 @@ exports.deleteNotification = async (req, res) => {
     const notification = await Notification.findOneAndDelete({ _id: id, sender: req.user._id });
     if (!notification) return res.status(404).json({ message: 'Notification not found' });
     res.json({ success: true, message: 'Notification deleted' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get data for Mess Bill calculation
+exports.getMessBillData = async (req, res) => {
+  try {
+    const { month, year } = req.query;
+    if (!month || !year) return res.status(400).json({ message: 'Month and year are required' });
+
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+
+    const students = await User.find({ role: 'student', isActive: true })
+      .select('name roomNumber foodType');
+
+    const attendance = await Attendance.find({
+      date: { $gte: startDate, $lte: endDate }, status: 'present'
+    }).select('student');
+
+    const messCuts = await MessCut.find({
+      status: 'approved',
+      $or: [
+        { startDate: { $lte: endDate }, endDate: { $gte: startDate } }
+      ]
+    }).select('student startDate endDate');
+
+    // Calculate present days per student
+    const presentDays = {};
+    attendance.forEach(a => {
+      presentDays[a.student] = (presentDays[a.student] || 0) + 1;
+    });
+
+    // Calculate mess cut days per student within the month
+    const messCutDays = {};
+    messCuts.forEach(mc => {
+      let cutStart = new Date(Math.max(startDate, new Date(mc.startDate)));
+      let cutEnd = new Date(Math.min(endDate, new Date(mc.endDate)));
+      let days = Math.floor((cutEnd - cutStart) / (1000 * 60 * 60 * 24)) + 1;
+      if (days > 0) {
+        messCutDays[mc.student] = (messCutDays[mc.student] || 0) + days;
+      }
+    });
+
+    const data = students.map(s => {
+      let pDays = presentDays[s._id] || 0;
+      let mCuts = messCutDays[s._id] || 0;
+      let mDays = Math.max(0, pDays - mCuts);
+      return {
+        _id: s._id,
+        name: s.name,
+        roomNumber: s.roomNumber,
+        foodType: s.foodType || 'non-veg',
+        presentDays: pDays,
+        messCuts: mCuts,
+        messDays: mDays,
+        milkTakenDays: 0 // Default to 0, editable in UI
+      };
+    });
+
+    res.json({ success: true, data });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

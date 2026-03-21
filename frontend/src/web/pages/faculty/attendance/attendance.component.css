@@ -119,3 +119,44 @@
         width: 100%;
     }
 }
+
+.marking-btns {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-sm:hover {
+    background: var(--primary-light);
+}
+
+.btn-sm.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+
+.s-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.s-info strong {
+    font-size: 14px;
+    color: var(--text-dark);
+}
+
+.s-info small {
+    color: var(--text-light);
+    font-size: 11px;
+}

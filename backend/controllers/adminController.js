@@ -5,6 +5,8 @@ const Outgoing = require('../models/Outgoing');
 const HomeGoing = require('../models/HomeGoing');
 const Notification = require('../models/Notification');
 const HostelSettings = require('../models/HostelSettings');
+const HostelClosing = require('../models/HostelClosing');
+const Archive = require('../models/Archive');
 
 // Get dashboard statistics
 exports.getDashboardStats = async (req, res) => {
@@ -17,10 +19,11 @@ exports.getDashboardStats = async (req, res) => {
 
     const todayOutgoings = await Outgoing.countDocuments({ createdAt: { $gte: startOfToday, $lt: endOfToday } });
     const todayHomeGoings = await HomeGoing.countDocuments({ createdAt: { $gte: startOfToday, $lt: endOfToday } });
-    const todayReturns = await Outgoing.countDocuments({
-      status: 'returned',
-      updatedAt: { $gte: startOfToday, $lt: endOfToday }
-    });
+    const [outgoingReturns, homegoingReturns] = await Promise.all([
+      Outgoing.countDocuments({ status: 'returned', updatedAt: { $gte: startOfToday, $lt: endOfToday } }),
+      HomeGoing.countDocuments({ status: 'returned', updatedAt: { $gte: startOfToday, $lt: endOfToday } })
+    ]);
+    const todayReturns = outgoingReturns + homegoingReturns;
 
     const activeMessCuts = await MessCut.countDocuments({
       startDate: { $lte: new Date() },
@@ -80,9 +83,48 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
+exports.getAttendanceReport = async (req, res) => {
+  try {
+    const { date } = req.query;
+    const searchDate = date ? new Date(date) : new Date();
+    searchDate.setHours(0, 0, 0, 0);
+
+    // Get all current students 
+    const students = await User.find({ role: 'student', isActive: true }).select('name userId roomNumber department');
+
+    // Get attendance for these students on this date
+    const attendance = await Attendance.find({
+      date: searchDate
+    }).populate('markedBy', 'name role');
+
+    const report = students.map(s => {
+      const att = attendance.find(a => a.student.toString() === s._id.toString());
+      return {
+        _id: s._id,
+        name: s.name,
+        userId: s.userId,
+        roomNumber: s.roomNumber,
+        department: s.department,
+        status: att ? att.status : 'not marked',
+        markedBy: att?.markedBy?.name || '—',
+        markedByRole: att?.markedBy?.role || '—'
+      };
+    });
+
+    res.json({ success: true, report, date: searchDate });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 exports.createUser = async (req, res) => {
   try {
     const userData = req.body;
+
+    // Auto-convert to Block Letters (Task 6)
+    if (userData.department) userData.department = userData.department.toUpperCase();
+    if (userData.hostelName) userData.hostelName = userData.hostelName.toUpperCase();
+
     const exists = await User.findOne({
       $or: [{ userId: userData.userId }, { email: userData.email }]
     });
@@ -101,6 +143,11 @@ exports.updateUser = async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
+
+    // Auto-convert to Block Letters (Task 6)
+    if (updates.department) updates.department = updates.department.toUpperCase();
+    if (updates.hostelName) updates.hostelName = updates.hostelName.toUpperCase();
+
     // Don't update password through this route unless explicitly provided and hashed
     if (updates.password) {
       const bcrypt = require('bcryptjs');
@@ -114,6 +161,62 @@ exports.updateUser = async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     res.json({ success: true, message: 'User updated successfully', user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Archive Logic (Task 5-6)
+exports.archiveUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const archive = new Archive({
+      originalId: user._id,
+      name: user.name,
+      userId: user.userId,
+      role: user.role,
+      email: user.email,
+      phone: user.phone,
+      department: user.department,
+      roomNumber: user.roomNumber,
+      hostelName: user.hostelName,
+      admissionNo: user.admissionNo,
+      semester: user.semester,
+      guardiansName: user.guardiansName,
+      guardiansPhone: user.guardiansPhone,
+      address: user.address,
+      collegeName: user.collegeName,
+      gender: user.gender,
+      bloodGroup: user.bloodGroup,
+      dateOfBirth: user.dateOfBirth,
+      dateOfAdmission: user.dateOfAdmission,
+      data: user.toObject()
+    });
+
+    await archive.save();
+    await User.findByIdAndDelete(req.params.id);
+
+    res.json({ success: true, message: 'User moved to archive.' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getArchives = async (req, res) => {
+  try {
+    const archives = await Archive.find().sort({ archivedAt: -1 });
+    res.json({ success: true, archives });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.deleteArchive = async (req, res) => {
+  try {
+    await Archive.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'Archive entry deleted permanently.' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -133,17 +236,29 @@ exports.deleteUser = async (req, res) => {
 // Outgoing Return Tracking
 exports.getReturnTracking = async (req, res) => {
   try {
-    const outgoings = await Outgoing.find()
-      .populate('student', 'name roomNumber admissionNo userId')
-      .sort({ createdAt: -1 })
-      .limit(50);
+    const { month, year } = req.query;
+    let query = {};
 
-    const homegoings = await HomeGoing.find({ status: { $in: ['active', 'returned'] } })
-      .populate('student', 'name roomNumber admissionNo userId')
-      .sort({ createdAt: -1 })
-      .limit(50);
+    if (month && year) {
+      const startDate = new Date(year, month - 1, 1);
+      const endDate = new Date(year, month, 0, 23, 59, 59);
+      query = { createdAt: { $gte: startDate, $lte: endDate } };
+    } else {
+      const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      query = { createdAt: { $gte: last24h } };
+    }
 
-    // Combine and sort by date
+    const outgoings = await Outgoing.find(query)
+      .populate('student', 'name roomNumber admissionNo userId')
+      .sort({ createdAt: -1 });
+
+    const homegoings = await HomeGoing.find({
+      ...query,
+      status: { $in: ['active', 'returned'] }
+    })
+      .populate('student', 'name roomNumber admissionNo userId')
+      .sort({ createdAt: -1 });
+
     const combined = [
       ...outgoings.map(o => ({ ...o._doc, logType: 'Outgoing' })),
       ...homegoings.map(h => ({ ...h._doc, logType: 'HomeGoing', timeLeaving: h.time }))
@@ -168,7 +283,8 @@ exports.getMessCuts = async (req, res) => {
 // Security Settings — update credentials + hostel settings
 exports.updateSecuritySettings = async (req, res) => {
   try {
-    const { email, password, locationCoordinates, returnRadius, minMessCutDays, openTime, closeTime } = req.body;
+    const { email, password, locationCoordinates, returnRadius, minMessCutDays, openTime, closeTime, foodPreferenceWindow } = req.body;
+
 
     const fs = require('fs');
     const path = require('path');
@@ -182,13 +298,15 @@ exports.updateSecuritySettings = async (req, res) => {
     await admin.save();
 
     // 2. Update hostel settings
-    if (locationCoordinates || returnRadius !== undefined || minMessCutDays !== undefined || openTime || closeTime) {
+    if (locationCoordinates || returnRadius !== undefined || minMessCutDays !== undefined || openTime || closeTime || foodPreferenceWindow) {
       const settingsUpdate = {};
       if (locationCoordinates) settingsUpdate.locationCoordinates = locationCoordinates;
       if (returnRadius !== undefined) settingsUpdate.returnRadius = returnRadius;
       if (minMessCutDays !== undefined) settingsUpdate.minMessCutDays = minMessCutDays;
       if (openTime) settingsUpdate.openTime = openTime;
       if (closeTime) settingsUpdate.closeTime = closeTime;
+      if (foodPreferenceWindow) settingsUpdate.foodPreferenceWindow = foodPreferenceWindow;
+
 
 
       await HostelSettings.findOneAndUpdate(
@@ -308,6 +426,41 @@ exports.deleteNotification = async (req, res) => {
     const notification = await Notification.findOneAndDelete({ _id: id, sender: req.user._id });
     if (!notification) return res.status(404).json({ message: 'Notification not found' });
     res.json({ success: true, message: 'Notification deleted' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Hostel Closing Actions
+exports.markHostelClosing = async (req, res) => {
+  try {
+    const { startDate, endDate, reason } = req.body;
+    const closing = new HostelClosing({
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
+      reason,
+      admin: req.user._id
+    });
+    await closing.save();
+    res.json({ success: true, message: 'Hostel closing dates recorded.', closing });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getHostelClosingHistory = async (req, res) => {
+  try {
+    const history = await HostelClosing.find().sort({ startDate: -1 });
+    res.json({ success: true, history });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.deleteHostelClosing = async (req, res) => {
+  try {
+    await HostelClosing.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'Hostel closing record removed.' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

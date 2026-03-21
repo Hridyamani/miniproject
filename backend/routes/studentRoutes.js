@@ -8,6 +8,8 @@ router.use(authorize('student'));
 
 router.get('/profile', ctrl.getProfile);
 router.put('/profile', ctrl.updateProfile);
+router.put('/food-preference', ctrl.updateFoodPreference);
+
 
 router.get('/attendance', ctrl.getAttendance);
 

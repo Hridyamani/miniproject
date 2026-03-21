@@ -1,0 +1,60 @@
+<div class="dashboard-layout">
+    <web-sidebar [role]="'admin'"></web-sidebar>
+    <div class="main-content">
+        <web-topbar [pageTitle]="'Archived Student Records'"></web-topbar>
+        <main class="page-content animate-fade-in">
+
+            <div class="page-header">
+                <div class="header-text">
+                    <h1>Student Archive Store</h1>
+                    <p>Records of past students. These are automatically deleted after 5 years.</p>
+                </div>
+            </div>
+
+            <div class="card p-0 overflow-hidden mt-32">
+                <div class="table-responsive">
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>Student Detail</th>
+                                <th>Dept / Hostel</th>
+                                <th>Archived date</th>
+                                <th>Archive logic</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let a of archives">
+                                <td>
+                                    <div class="s-info">
+                                        <strong>{{ a.name }}</strong>
+                                        <small>{{ a.userId }} • {{ a.email }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="loc-info">
+                                        <span class="badge dept">{{ a.department }}</span>
+                                        <span class="badge hostel">{{ a.hostelName }}</span>
+                                    </div>
+                                </td>
+                                <td>{{ a.archivedAt | date:'dd MMM yyyy HH:mm' }}</td>
+                                <td>
+                                    <span class="auto-del"><i class="bi bi-clock"></i> Auto-deletion enabled</span>
+                                </td>
+                                <td>
+                                    <button class="btn-del" (click)="deleteEntry(a._id)">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr *ngIf="archives.length === 0 && !loading">
+                                <td colspan="5" class="empty-state">No archived records found.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>

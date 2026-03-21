@@ -29,6 +29,7 @@ export class AuthorityDashboardComponent implements OnInit {
   attendanceSearch = '';
   selectedDate = new Date().toISOString().split('T')[0];
   selectedStudents = new Set<string>();
+  isDayClosed = false;
   marking = false;
 
   constructor(private http: HttpClient, public auth: AuthService) { }
@@ -61,6 +62,16 @@ export class AuthorityDashboardComponent implements OnInit {
             }
           }
         });
+        this.checkIfDateIsClosed();
+      }
+    });
+  }
+
+  checkIfDateIsClosed() {
+    this.http.get<any>('http://localhost:5000/api/authority/closed-days', this.headers).subscribe({
+      next: (res) => {
+        const closedDays = res.closedDays || [];
+        this.isDayClosed = closedDays.some((cd: any) => new Date(cd.date).toISOString().split('T')[0] === this.selectedDate);
       }
     });
   }
@@ -104,5 +115,20 @@ export class AuthorityDashboardComponent implements OnInit {
       },
       error: () => alert('Failed to mark attendance')
     });
+  }
+
+  markHostelClosed() {
+    if (confirm(`Mark ${this.selectedDate} as Hostel Closed Day? This will override normal attendance view for students.`)) {
+      this.http.post('http://localhost:5000/api/authority/closed-days', {
+        date: this.selectedDate,
+        reason: 'Holiday / Closed'
+      }, this.headers).subscribe({
+        next: () => {
+          this.isDayClosed = true;
+          alert('Hostel marked as closed for this date');
+        },
+        error: (err) => alert(err.error?.message || 'Failed to mark closed day')
+      });
+    }
   }
 }

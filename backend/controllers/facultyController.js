@@ -3,12 +3,15 @@ const Attendance = require('../models/Attendance');
 const MessCut = require('../models/MessCut');
 const HomeGoing = require('../models/HomeGoing');
 const Notification = require('../models/Notification');
+const HostelClosing = require('../models/HostelClosing');
 
 // View profile
 exports.getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select('-password');
-    res.json({ success: true, user });
+    const HostelSettings = require('../models/HostelSettings');
+    const settings = await HostelSettings.findOne({ hostelName: user.hostelName });
+    res.json({ success: true, user, foodPreferenceWindow: settings?.foodPreferenceWindow || null });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -29,6 +32,55 @@ exports.updateProfile = async (req, res) => {
   }
 };
 
+// Update Food Preference
+exports.updateFoodPreference = async (req, res) => {
+  try {
+    const { foodType } = req.body;
+    if (!['veg', 'non-veg'].includes(foodType)) {
+      return res.status(400).json({ success: false, message: 'Invalid food type' });
+    }
+
+    const HostelSettings = require('../models/HostelSettings');
+    const settings = await HostelSettings.findOne({ hostelName: req.user.hostelName });
+    
+    if (!settings || !settings.foodPreferenceWindow || !settings.foodPreferenceWindow.startDate || !settings.foodPreferenceWindow.endDate) {
+      return res.status(403).json({ success: false, message: 'Food preference change window is currently closed.' });
+    }
+
+    const now = new Date();
+    const start = new Date(settings.foodPreferenceWindow.startDate);
+    const end = new Date(settings.foodPreferenceWindow.endDate);
+
+    // End date is inclusive, so end of the day
+    end.setHours(23, 59, 59, 999);
+
+    if (now < start || now > end) {
+      return res.status(403).json({ success: false, message: 'Food preference change window is currently closed.' });
+    }
+
+    const user = await User.findById(req.user._id);
+    
+    // Check if preference duration has passed
+    const durationMonths = settings.foodPreferenceWindow.durationMonths || 3;
+    if (user.lastFoodTypeChangedAt) {
+      const validUntil = new Date(user.lastFoodTypeChangedAt);
+      validUntil.setMonth(validUntil.getMonth() + durationMonths);
+      
+      if (now < validUntil) {
+        return res.status(403).json({ success: false, message: `You can only change your preference after ${durationMonths} months from your last change.` });
+      }
+    }
+
+    user.foodType = foodType;
+    user.lastFoodTypeChangedAt = now;
+    await user.save();
+
+    res.json({ success: true, message: 'Food preference updated successfully', user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // Attendance Section 
 
 exports.markSelfAttendance = async (req, res) => {
@@ -36,6 +88,16 @@ exports.markSelfAttendance = async (req, res) => {
     const { status, date } = req.body;
     const attendanceDate = date ? new Date(date) : new Date();
     attendanceDate.setHours(0, 0, 0, 0);
+
+    // Check if hostel is closed on this date
+    const isClosed = await HostelClosing.findOne({
+      startDate: { $lte: attendanceDate },
+      endDate: { $gte: attendanceDate }
+    });
+
+    if (isClosed) {
+      return res.status(400).json({ success: false, message: `Hostel is closed from ${isClosed.startDate.toDateString()} to ${isClosed.endDate.toDateString()}. Attendance cannot be marked.` });
+    }
 
     // Check if already marked
     const existing = await Attendance.findOne({
@@ -64,6 +126,67 @@ exports.markSelfAttendance = async (req, res) => {
   }
 };
 
+// --- Student Attendance Marking for Faculty ---
+exports.getStudentsForAttendance = async (req, res) => {
+  try {
+    const students = await User.find({ role: 'student', isActive: true })
+      .select('name roomNumber userId department')
+      .sort({ roomNumber: 1 });
+    res.json({ success: true, students });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.markStudentAttendance = async (req, res) => {
+  try {
+    const { attendance, date } = req.body; // Expects array of { student, status }
+    const markingDate = date ? new Date(date) : new Date();
+    markingDate.setHours(0, 0, 0, 0);
+
+    // Check if hostel is closed on this date
+    const iCl = await HostelClosing.findOne({
+      startDate: { $lte: markingDate },
+      endDate: { $gte: markingDate }
+    });
+
+    if (iCl) {
+      return res.status(400).json({ success: false, message: `Hostel is closed on this date.` });
+    }
+
+    const results = [];
+    for (const item of attendance) {
+      const { student: studentId, status } = item;
+      const student = await User.findById(studentId);
+      if (!student) continue;
+
+      let record = await Attendance.findOne({ student: studentId, date: markingDate });
+
+      if (record) {
+        record.status = status;
+        record.markedBy = req.user._id;
+        record.role = req.user.role;
+      } else {
+        record = new Attendance({
+          student: studentId,
+          studentName: student.name,
+          admissionNo: student.admissionNo,
+          roomNumber: student.roomNumber,
+          date: markingDate,
+          status,
+          markedBy: req.user._id,
+          role: req.user.role
+        });
+      }
+      await record.save();
+      results.push(record);
+    }
+    res.json({ success: true, message: 'Attendance processed', count: results.length });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 exports.getSelfAttendanceHistory = async (req, res) => {
   try {
     const history = await Attendance.find({ student: req.user._id }).sort({ date: -1 }).limit(30);
@@ -78,6 +201,10 @@ exports.getSelfAttendanceHistory = async (req, res) => {
 exports.requestMessCut = async (req, res) => {
   try {
     const { startDate, endDate, reason } = req.body;
+
+    if (new Date(startDate) >= new Date(endDate)) {
+      return res.status(400).json({ success: false, message: 'Start date must be before end date.' });
+    }
 
     // Check overlap
     const existingOverlap = await MessCut.findOne({
@@ -111,7 +238,13 @@ exports.requestMessCut = async (req, res) => {
 
 exports.getSelfMessCuts = async (req, res) => {
   try {
-    const history = await MessCut.find({ student: req.user._id }).sort({ createdAt: -1 });
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+    const history = await MessCut.find({ 
+      student: req.user._id,
+      createdAt: { $gte: threeMonthsAgo }
+    }).sort({ createdAt: -1 });
     res.json({ success: true, history });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -125,7 +258,7 @@ exports.markHomeGoing = async (req, res) => {
     const { leaveDate, returnDate, reason, place } = req.body;
     const user = await User.findById(req.user._id);
 
-    if (new Date(returnDate) <= new Date(leaveDate)) {
+    if (returnDate && new Date(returnDate) <= new Date(leaveDate)) {
       return res.status(400).json({ success: false, message: 'Return time must be after leaving time.' });
     }
 
@@ -148,7 +281,13 @@ exports.markHomeGoing = async (req, res) => {
 
 exports.getSelfHomeGoings = async (req, res) => {
   try {
-    const history = await HomeGoing.find({ student: req.user._id }).sort({ createdAt: -1 });
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+    const history = await HomeGoing.find({ 
+      student: req.user._id,
+      createdAt: { $gte: threeMonthsAgo }
+    }).sort({ createdAt: -1 });
     res.json({ success: true, history });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -159,12 +298,25 @@ exports.getSelfHomeGoings = async (req, res) => {
 
 exports.getNotifications = async (req, res) => {
   try {
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+    const twoWeeksAgo = new Date();
+    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+
+    // Auto-delete request status notifications older than 2 weeks
+    await Notification.deleteMany({
+      type: 'request',
+      createdAt: { $lt: twoWeeksAgo }
+    });
+
     const notifications = await Notification.find({
       $or: [
         { user: req.user._id },
         { targetRole: 'faculty' },
         { targetRole: 'all' }
-      ]
+      ],
+      createdAt: { $gte: oneMonthAgo }
     }).sort({ createdAt: -1 });
     res.json({ success: true, notifications });
   } catch (error) {

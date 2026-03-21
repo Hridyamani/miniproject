@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { SidebarComponent } from '../../../components/sidebar/sidebar.component';
@@ -9,21 +10,87 @@ import { AuthService } from '../../../services/auth.service';
 @Component({
   selector: 'web-faculty-dashboard',
   standalone: true,
-  imports: [CommonModule, SidebarComponent, TopbarComponent, RouterModule],
+  imports: [CommonModule, FormsModule, SidebarComponent, TopbarComponent, RouterModule],
   templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.css']
+  styleUrls: ['./dashboard.component.css'],
+  providers: []
 })
 export class FacultyDashboardComponent implements OnInit {
   user: any;
   notifications: any[] = [];
   stats = { attendanceCount: 0, messCutCount: 0, homeGoingCount: 0 };
+  
+  foodPreferenceWindow: any;
+  isWindowOpen = false;
+  isDurationValid = true;
+  validUntilDate: Date | null = null;
+  durationMonths = 3;
+  editingFoodType = 'non-veg';
+  foodMsg = '';
+  foodMsgType = '';
 
   constructor(private http: HttpClient, private auth: AuthService) { }
 
   ngOnInit() {
     this.user = this.auth.userValue;
+    this.loadProfileDetails();
     this.loadStats();
     this.loadNotifications();
+  }
+
+  loadProfileDetails() {
+    this.http.get<any>('http://localhost:5000/api/faculty/profile', this.headers).subscribe({
+      next: (res) => {
+        this.user = res.user;
+        this.editingFoodType = this.user?.foodType || 'non-veg';
+        this.foodPreferenceWindow = res.foodPreferenceWindow;
+        this.checkWindow();
+      }
+    });
+  }
+
+  checkWindow() {
+    let windowOpen = false;
+    this.durationMonths = this.foodPreferenceWindow?.durationMonths || 3;
+
+    if (this.foodPreferenceWindow && this.foodPreferenceWindow.startDate && this.foodPreferenceWindow.endDate) {
+      const start = new Date(this.foodPreferenceWindow.startDate);
+      const end = new Date(this.foodPreferenceWindow.endDate);
+      end.setHours(23, 59, 59, 999);
+      const now = new Date();
+      windowOpen = (now >= start && now <= end);
+    }
+
+    if (this.user?.lastFoodTypeChangedAt) {
+      const validUntil = new Date(this.user.lastFoodTypeChangedAt);
+      validUntil.setMonth(validUntil.getMonth() + this.durationMonths);
+      this.validUntilDate = validUntil;
+      
+      const now = new Date();
+      if (now < validUntil) {
+          this.isDurationValid = false;
+      } else {
+          this.isDurationValid = true;
+      }
+    } else {
+      this.isDurationValid = true;
+    }
+
+    this.isWindowOpen = windowOpen && this.isDurationValid;
+  }
+
+  updateFoodPreference() {
+    this.http.put('http://localhost:5000/api/faculty/food-preference', { foodType: this.editingFoodType }, this.headers).subscribe({
+      next: (res: any) => {
+        this.user = res.user;
+        this.foodMsg = res.message;
+        this.foodMsgType = 'success';
+      },
+      error: (err) => {
+        this.foodMsg = err.error?.message || 'Failed to update';
+        this.foodMsgType = 'error';
+      }
+    });
   }
 
   get headers() {
@@ -40,7 +107,18 @@ export class FacultyDashboardComponent implements OnInit {
 
     this.http.get<any>('http://localhost:5000/api/faculty/mess-cut', this.headers).subscribe({
       next: (res) => {
-        this.stats.messCutCount = (res.history || []).length;
+        const history = res.history || [];
+        let totalDays = 0;
+        history.forEach((m: any) => {
+          if (m.status === 'approved') {
+            const start = new Date(m.startDate);
+            const end = new Date(m.endDate);
+            const diffTime = Math.abs(end.getTime() - start.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            totalDays += diffDays;
+          }
+        });
+        this.stats.messCutCount = totalDays;
       }
     });
 

@@ -19,11 +19,7 @@
                 <!-- Today's Activity Card -->
                 <div class="dashboard-card primary-gradient">
                     <div class="card-header-row">
-                        <h3><i class="bi bi-activity"></i> Today's Summary</h3>
-                        <span class="live-indicator">
-                            <span class="ring"></span>
-                            Live
-                        </span>
+                        <h3><i class="bi bi-activity"></i> System Insights</h3>
                     </div>
                     <div class="stats-box">
                         <div class="stat-node">
@@ -37,6 +33,10 @@
                         <div class="stat-node">
                             <div class="n-label"> Home Goings </div>
                             <div class="n-value">{{ stats?.today?.todayHomeGoings || 0 }}</div>
+                        </div>
+                        <div class="stat-node">
+                            <div class="n-label"> Active Mess Cuts </div>
+                            <div class="n-value">{{ stats?.today?.activeMessCuts || 0 }}</div>
                         </div>
                     </div>
                 </div>
@@ -57,6 +57,10 @@
                             <div class="n-value">{{ stats?.pending?.pendingHomeGoings || 0 }}</div>
                         </div>
                         <div class="stat-node">
+                            <div class="n-label"> Weekly Outgoings </div>
+                            <div class="n-value">{{ stats?.weekly?.weeklyOutgoings || 0 }}</div>
+                        </div>
+                        <div class="stat-node">
                             <div class="n-label"> Weekly Pending </div>
                             <div class="n-value">{{ stats?.pending?.weeklyPending || 0 }}</div>
                         </div>
@@ -68,10 +72,10 @@
             <div class="dashboard-card mt-30">
                 <div class="table-header">
                     <div class="th-left">
-                        <h3> Live Exit - Entry Tracking </h3>
-                        <p>Return status monitoring.</p>
+                        <h3> Movement History Tracking </h3>
+                        <p>Observe all entry and exit logs.</p>
                     </div>
-                    <button class="secondary-btn"> View All </button>
+                    <button class="secondary-btn" [routerLink]="['/admin/tracking-history']"> View History </button>
                 </div>
 
                 <div class="table-responsive">
@@ -97,7 +101,7 @@
                                     </div>
                                 </td>
                                 <td><span class="room-pill">{{ item.student?.roomNumber || '—' }}</span></td>
-                                <td><span class="log-type"> Outgoings </span></td>
+                                <td><span class="log-type">{{ item.logType || 'Outgoing' }}</span></td>
                                 <td>
                                     <span class="status-badge" [class.success]="item.status === 'returned'"
                                         [class.warning]="item.status !== 'returned'">
@@ -108,9 +112,13 @@
                                 </td>
                                 <td>
                                     <div class="time-col">
-                                        <i class="bi bi-clock"></i>
-                                        {{ item.returnTime ? (item.returnTime | date:'shortTime') : (item.timeLeaving)
-                                        }}
+                                        <div class="entry-exit-times" *ngIf="item.status === 'returned'">
+                                            <span class="t-out" title="Departure">↑ {{ item.timeLeaving }}</span>
+                                            <span class="t-in" title="Return">↓ {{ item.returnTime }}</span>
+                                        </div>
+                                        <div class="only-out" *ngIf="item.status !== 'returned'">
+                                            <span>↑ {{ item.timeLeaving }}</span>
+                                        </div>
                                     </div>
                                 </td>
                             </tr>

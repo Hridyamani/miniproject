@@ -219,21 +219,4 @@
 .mr-10 {
     margin-right: 10px;
 }
-
-.strength-indicator {
-    margin-top: 8px;
-    font-size: 11px;
-    font-weight: 700;
-}
-
-.strength-indicator span.weak {
-    color: #ef4444;
-}
-
-.strength-indicator span.medium {
-    color: #f59e0b;
-}
-
-.strength-indicator span.strong {
-    color: #10b981;
-}
+

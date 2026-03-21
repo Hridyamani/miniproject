@@ -1,0 +1,192 @@
+<div class="dashboard-layout">
+    <web-sidebar [role]="'authority'"></web-sidebar>
+    <div class="main-content">
+        <web-topbar [pageTitle]="'Mess Bill Calculation'"></web-topbar>
+        <main class="page-content animate-fade-in">
+            <div class="page-header">
+                <div class="header-text">
+                    <h1>Monthly Mess Bill</h1>
+                    <p>3-Stage Workflow to process and calculate accurate student mess bills.</p>
+                </div>
+            </div>
+
+            <!-- Workflow Progress Tracker -->
+            <div class="workflow-steps">
+                <div class="step" [class.active]="stage >= 1">1. Enter Expenses</div>
+                <div class="step-divider"></div>
+                <div class="step" [class.active]="stage >= 2">2. Review Auto Data</div>
+                <div class="step-divider"></div>
+                <div class="step" [class.active]="stage === 3">3. Final Bill</div>
+            </div>
+
+            <!-- STAGE 1: Expenses -->
+            <div *ngIf="stage === 1" class="stage-container">
+                <div class="bills-grid">
+                    <!-- SECTION A: Bills -->
+                    <div class="card premium-card">
+                        <h3>Section A: Upload & Enter Food Bills</h3>
+                        <div class="bill-entry-form">
+                            <input type="text" class="form-control" [(ngModel)]="newItemName" placeholder="Item Name (e.g. Rice)" />
+                            <input type="number" class="form-control" [(ngModel)]="newItemAmount" placeholder="Amount (₹)" />
+                            <select class="form-control" [(ngModel)]="newItemCategory">
+                                <option value="veg">Veg</option>
+                                <option value="non-veg">Non-Veg</option>
+                                <option value="common">Common Food</option>
+                            </select>
+                            <button class="btn btn-primary" (click)="addBill()"><i class="bi bi-plus"></i> Add</button>
+                        </div>
+                        
+                        <div class="bills-list mt-3">
+                            <div class="bill-item" *ngFor="let b of bills; let i = index">
+                                <span class="b-name">{{b.name}}</span>
+                                <span class="badge b-category" [ngClass]="b.category">{{b.category | titlecase}}</span>
+                                <span class="b-amount">₹{{b.amount}}</span>
+                                <button class="btn btn-sm text-danger" (click)="removeBill(i)"><i class="bi bi-trash"></i></button>
+                            </div>
+                            <div *ngIf="bills.length === 0" class="empty-state">No bills added yet.</div>
+                        </div>
+
+                        <div class="totals-summary mt-3">
+                            <div class="t-badge veg">Veg Total: <strong>₹{{totalVeg}}</strong></div>
+                            <div class="t-badge non-veg">Non-Veg Total: <strong>₹{{totalNonVeg}}</strong></div>
+                            <div class="t-badge common">Common Total: <strong>₹{{totalCommonFood}}</strong></div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION B: Additional -->
+                    <div class="card premium-card">
+                        <h3>Section B: Additional Setup</h3>
+                        
+                        <div class="form-group row">
+                            <div class="col">
+                                <label>Billing Month</label>
+                                <input type="month" class="form-control" [(ngModel)]="billingMonth" />
+                            </div>
+                        </div>
+
+                        <div class="form-group mt-3">
+                            <label>Milk Price per day (₹)</label>
+                            <input type="number" class="form-control" [(ngModel)]="milkPriceStr" />
+                        </div>
+
+                        <h4 class="mt-4">Common Monthly Expenses (Shared equally)</h4>
+                        <div class="form-group row">
+                            <div class="col">
+                                <label>Cook Salary</label>
+                                <input type="number" class="form-control" [(ngModel)]="cookSalaryStr" />
+                            </div>
+                            <div class="col">
+                                <label>Matron Salary</label>
+                                <input type="number" class="form-control" [(ngModel)]="matronSalaryStr" />
+                            </div>
+                            <div class="col">
+                                <label>Events/Celebrations</label>
+                                <input type="number" class="form-control" [(ngModel)]="eventsSalaryStr" />
+                            </div>
+                        </div>
+                        <div class="text-end mt-2">
+                            Total: <strong>₹{{totalCommonExpenses}}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-footer">
+                    <button class="btn btn-lg btn-success" (click)="loadData()" [disabled]="loading">
+                        Next: Fetch Student Data <i class="bi bi-arrow-right" *ngIf="!loading"></i>
+                        <div class="spinner-border spinner-border-sm" *ngIf="loading"></div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- STAGE 2: Auto Data -->
+            <div *ngIf="stage === 2" class="stage-container">
+                <div class="card table-card premium-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h3>Section C: Student Data (Fetched)</h3>
+                        <span class="badge text-bg-info">Total Students: {{studentsData.length}}</span>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="modern-table">
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Room</th>
+                                    <th>Food Type</th>
+                                    <th>Present Days</th>
+                                    <th>Mess Cuts</th>
+                                    <th>Mess Days</th>
+                                    <th>Milk Days (Input)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let s of studentsData">
+                                    <td>{{s.name}}</td>
+                                    <td><span class="room-pill">{{s.roomNumber}}</span></td>
+                                    <td><span class="badge" [ngClass]="s.foodType">{{s.foodType | titlecase}}</span></td>
+                                    <td>{{s.presentDays}}</td>
+                                    <td><span class="text-danger">{{s.messCuts}}</span></td>
+                                    <td><strong>{{s.messDays}}</strong></td>
+                                    <td><input type="number" class="form-control form-control-sm w-auto" [(ngModel)]="s.milkTakenDays" min="0" /></td>
+                                </tr>
+                                <tr *ngIf="studentsData.length === 0">
+                                    <td colspan="7" class="empty-state">No student data found for the selected month.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="action-footer d-flex justify-content-between mt-3">
+                    <button class="btn btn-secondary" (click)="stage = 1">Back</button>
+                    <button class="btn btn-success btn-lg" (click)="calculateBill()" [disabled]="studentsData.length === 0">
+                        Calculate Final Bill <i class="bi bi-calculator"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- STAGE 3: Final Table -->
+            <div *ngIf="stage === 3" class="stage-container">
+                <div class="card premium-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h3>Final Mess Bill Report</h3>
+                        <div class="btn-group">
+                            <button class="btn btn-primary btn-sm"><i class="bi bi-printer"></i> Print</button>
+                            <button class="btn btn-secondary btn-sm" (click)="stage = 2">Edit Data</button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="modern-table final-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Room</th>
+                                    <th>Type</th>
+                                    <th>Mess Days</th>
+                                    <th>Food (₹)</th>
+                                    <th>C.Food (₹)</th>
+                                    <th>Milk (₹)</th>
+                                    <th>Salary/Bills (₹)</th>
+                                    <th>Total (₹)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let s of finalBill">
+                                    <td>{{s.name}}</td>
+                                    <td><span class="room-pill">{{s.roomNumber}}</span></td>
+                                    <td>{{s.foodType | titlecase}}</td>
+                                    <td>{{s.messDays}}</td>
+                                    <td>{{s.foodCharge | number:'1.2-2'}}</td>
+                                    <td>{{s.commonFoodShare | number:'1.2-2'}}</td>
+                                    <td>{{s.milkAmount}}</td>
+                                    <td>{{s.commonBillShare | number:'1.2-2'}}</td>
+                                    <td class="total-td">₹{{s.totalAmount | number:'1.2-2'}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>

@@ -1,0 +1,182 @@
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f8fafc;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-left: 280px;
+  background-color: #f8fafc;
+  min-height: 100vh;
+}
+
+.page-content {
+  padding: 2rem 3rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.page-header h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+.page-header p { color: #64748b; }
+
+.workflow-steps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 2rem 0;
+  background: white;
+  padding: 1.5rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+}
+
+.step {
+  font-weight: 600;
+  color: #94a3b8;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.step.active {
+  color: #2563eb;
+  background: #eff6ff;
+  box-shadow: 0 2px 4px rgba(37,99,235,0.1);
+}
+
+.step-divider {
+  flex: 1;
+  height: 2px;
+  background: #e2e8f0;
+  margin: 0 1rem;
+}
+
+.premium-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.03);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  border: 1px solid #f1f5f9;
+}
+
+.premium-card h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 1.5rem;
+}
+
+.bills-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.bill-entry-form {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  gap: 1rem;
+  align-items: center;
+}
+
+.bills-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.bill-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  border-bottom: 1px dashed #e2e8f0;
+}
+.bill-item:last-child { border-bottom: none; }
+
+.b-name { font-weight: 500; flex: 1; }
+.b-amount { font-weight: 600; color: #1e293b; margin: 0 1rem;}
+
+.badge.veg { background: #dcfce7; color: #166534; }
+.badge.non-veg { background: #fee2e2; color: #991b1b; }
+.badge.common { background: #fef3c7; color: #92400e; }
+
+.totals-summary {
+  display: flex;
+  gap: 1rem;
+}
+
+.t-badge {
+  flex: 1;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 0.95rem;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+}
+.t-badge.veg { background: #f0fdf4; border: 1px solid #bbf7d0;}
+.t-badge.non-veg { background: #fef2f2; border: 1px solid #fecaca;}
+.t-badge.common { background: #fffbeb; border: 1px solid #fde68a;}
+
+/* Tables */
+.modern-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.modern-table th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  padding: 1rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.modern-table td {
+  padding: 1rem;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+}
+
+.room-pill {
+  background: #e0e7ff;
+  color: #3730a3;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.total-td {
+  font-weight: 700;
+  color: #0f172a;
+  background: #f8fafc;
+}
+
+.action-footer {
+  text-align: right;
+  margin-top: 2rem;
+}
+
+.btn-lg {
+  padding: 0.75rem 2rem;
+  font-size: 1.1rem;
+  border-radius: 12px;
+}

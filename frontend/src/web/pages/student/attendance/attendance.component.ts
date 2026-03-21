@@ -14,6 +14,8 @@ import { AuthService } from '../../../services/auth.service';
 })
 export class AttendanceComponent implements OnInit {
   attendanceRecords: any[] = [];
+  closedDays: any[] = [];
+
   attendancePercent = 0;
   viewDate = new Date();
   monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -37,6 +39,7 @@ export class AttendanceComponent implements OnInit {
     this.http.get<any>('http://localhost:5000/api/student/attendance', this.headers).subscribe({
       next: res => {
         this.attendanceRecords = res.attendance || [];
+        this.closedDays = res.closedDays || [];
         this.calculatePercentage();
       }
     });
@@ -79,6 +82,12 @@ export class AttendanceComponent implements OnInit {
   }
 
   getAttendanceClass(day: number) {
+    const d = new Date(this.viewDate.getFullYear(), this.viewDate.getMonth(), day);
+    const dateStr = d.toDateString();
+
+    const isClosed = this.closedDays.some(cd => new Date(cd.date).toDateString() === dateStr);
+    if (isClosed) return 'day-closed';
+
     const record = this.getAttendanceStatus(day);
     if (!record) return '';
     return record.status === 'present' ? 'day-present' : 'day-absent';

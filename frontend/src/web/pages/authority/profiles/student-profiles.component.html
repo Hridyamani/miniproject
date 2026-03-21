@@ -24,6 +24,7 @@
                                 <th>Room</th>
                                 <th>User ID</th>
                                 <th>College</th>
+                                <th>Department</th>
                                 <th>Semester</th>
                                 <th>Contact</th>
                                 <th style="text-align: right">Actions</th>
@@ -43,6 +44,7 @@
                                 <td class="room-cell">{{ s.roomNumber }}</td>
                                 <td class="id-cell">{{ s.userId }}</td>
                                 <td>{{ s.collegeName || '—' }}</td>
+                                <td>{{ s.department || '—' }}</td>
                                 <td>S{{ s.semester || '—' }}</td>
                                 <td>
                                     <div class="contact-info">
@@ -81,6 +83,9 @@
                             </div>
                             <div><label>Hostel</label>
                                 <p>{{ selectedStudent.hostelName }}</p>
+                            </div>
+                            <div><label>Department</label>
+                                <p>{{ selectedStudent.department || '—' }}</p>
                             </div>
                             <div><label>Room Number</label>
                                 <p>{{ selectedStudent.roomNumber }}</p>

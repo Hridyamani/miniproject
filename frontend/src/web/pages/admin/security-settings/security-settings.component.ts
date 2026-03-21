@@ -22,6 +22,9 @@ export class SecuritySettingsComponent implements OnInit {
   minMessCutDays = 3;
   openTime = '06:00';
   closeTime = '21:30';
+  foodPreferenceStartDate = '';
+  foodPreferenceEndDate = '';
+  foodPreferenceDurationMonths = 3;
   transferUserId = '';
   loading = false;
   transferLoading = false;
@@ -50,6 +53,11 @@ export class SecuritySettingsComponent implements OnInit {
           this.minMessCutDays = res.settings.minMessCutDays || 3;
           this.openTime = res.settings.openTime || '06:00';
           this.closeTime = res.settings.closeTime || '21:30';
+          if (res.settings.foodPreferenceWindow) {
+            this.foodPreferenceStartDate = res.settings.foodPreferenceWindow.startDate ? res.settings.foodPreferenceWindow.startDate.split('T')[0] : '';
+            this.foodPreferenceEndDate = res.settings.foodPreferenceWindow.endDate ? res.settings.foodPreferenceWindow.endDate.split('T')[0] : '';
+            this.foodPreferenceDurationMonths = res.settings.foodPreferenceWindow.durationMonths || 3;
+          }
         }
       },
       error: () => { }
@@ -65,7 +73,12 @@ export class SecuritySettingsComponent implements OnInit {
       returnRadius: this.returnRadius,
       minMessCutDays: this.minMessCutDays,
       openTime: this.openTime,
-      closeTime: this.closeTime
+      closeTime: this.closeTime,
+      foodPreferenceWindow: {
+        startDate: this.foodPreferenceStartDate || null,
+        endDate: this.foodPreferenceEndDate || null,
+        durationMonths: this.foodPreferenceDurationMonths
+      }
     };
 
 

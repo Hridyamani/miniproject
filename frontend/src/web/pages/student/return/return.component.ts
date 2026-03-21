@@ -44,8 +44,8 @@ export class ReturnComponent implements OnInit {
       this.msg = '';
       navigator.geolocation.getCurrentPosition(
         pos => {
-          this.lat = pos.coords.latitude;
-          this.lng = pos.coords.longitude;
+          this.lat = parseFloat(pos.coords.latitude.toFixed(4));
+          this.lng = parseFloat(pos.coords.longitude.toFixed(4));
           this.located = true;
           this.locating = false;
         },

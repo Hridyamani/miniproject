@@ -18,5 +18,13 @@ router.post('/publish-notification', ctrl.publishNotification);
 router.get('/notifications', ctrl.getNotifications);
 router.delete('/notifications/:id', ctrl.deleteNotification);
 
+// Hostel Closed Days
+router.post('/closed-days', ctrl.markHostelClosed);
+router.get('/closed-days', ctrl.getHostelClosedDays);
+router.delete('/closed-days/:id', ctrl.deleteClosedDay);
+
+// Mess Bill
+router.get('/mess-bill-data', ctrl.getMessBillData);
+
 
 module.exports = router;

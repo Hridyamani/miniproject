@@ -34,6 +34,8 @@ export const WEB_ROUTES: Routes = [
       { path: 'users', loadComponent: () => import('./pages/admin/user-management/user-management.component').then(m => m.UserManagementComponent) },
       { path: 'notifications', loadComponent: () => import('./pages/admin/notifications/notifications.component').then(m => m.NotificationsComponent) },
       { path: 'security', loadComponent: () => import('./pages/admin/security-settings/security-settings.component').then(m => m.SecuritySettingsComponent) },
+      { path: 'archive', loadComponent: () => import('./pages/admin/archive/archive.component').then(m => m.ArchiveComponent) },
+      { path: 'tracking-history', loadComponent: () => import('./pages/admin/tracking-history/tracking-history.component').then(m => m.TrackingHistoryComponent) },
     ]
   },
   {
@@ -47,6 +49,9 @@ export const WEB_ROUTES: Routes = [
       { path: 'notifications', loadComponent: () => import('./pages/authority/notifications/notifications.component').then(m => m.NotificationsComponent) },
       { path: 'student-profiles', loadComponent: () => import('./pages/authority/profiles/student-profiles.component').then(m => m.StudentProfilesComponent) },
       { path: 'faculty-profiles', loadComponent: () => import('./pages/authority/profiles/faculty-profiles.component').then(m => m.FacultyProfilesComponent) },
+      { path: 'attendance', loadComponent: () => import('./pages/admin/attendance/attendance-report.component').then(m => m.AdminAttendanceComponent) },
+      { path: 'hostel-closing', loadComponent: () => import('./pages/admin/hostel-closing/hostel-closing.component').then(m => m.HostelClosingComponent) },
+      { path: 'mess-bill', loadComponent: () => import('./pages/authority/mess-bill/mess-bill.component').then(m => m.MessBillComponent) },
     ]
   },
   {

@@ -55,4 +55,5 @@ export class AuthService {
   getRole(): string | null {
     return this.userValue?.role || null;
   }
+  private productionUrl = 'https://staysphere-n5z3.onrender.com';
 }

@@ -14,7 +14,16 @@ router.post('/attendance', ctrl.markAttendance);
 router.get('/students', ctrl.getStudents);
 router.get('/faculty', ctrl.getFaculty);
 router.get('/reports', ctrl.getReports);
-router.post('/publish-notification', ctrl.publishNotification);
+const multer = require('multer');
+const path = require('path');
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, 'uploads/'),
+  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
+});
+const upload = multer({ storage: storage });
+
+router.post('/publish-notification', upload.single('pdf'), ctrl.publishNotification);
 router.get('/notifications', ctrl.getNotifications);
 router.delete('/notifications/:id', ctrl.deleteNotification);
 

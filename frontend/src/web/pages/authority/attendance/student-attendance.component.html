@@ -34,13 +34,15 @@
                                 <td><span class="room-pill">{{ s.roomNumber }}</span></td>
                                 <td>{{ s.department }}</td>
                                 <td>
-                                    <div class="status-toggle d-flex gap-2">
-                                        <label class="btn btn-outline-success btn-sm" [class.active]="s.status === 'present'">
-                                            <input type="radio" [name]="'status-'+s._id" value="present" [(ngModel)]="s.status" class="d-none"> Present
+                                    <div class="attendance-presence">
+                                        <label class="switch">
+                                            <input type="checkbox" [checked]="s.status === 'present'" 
+                                                (change)="s.status = $any($event.target).checked ? 'present' : 'absent'">
+                                            <span class="slider round"></span>
                                         </label>
-                                        <label class="btn btn-outline-danger btn-sm" [class.active]="s.status === 'absent'">
-                                            <input type="radio" [name]="'status-'+s._id" value="absent" [(ngModel)]="s.status" class="d-none"> Absent
-                                        </label>
+                                        <span class="status-label" [class.present]="s.status === 'present'">
+                                            {{ s.status | titlecase }}
+                                        </span>
                                     </div>
                                 </td>
                             </tr>

@@ -101,43 +101,34 @@ export class MessBillComponent implements OnInit {
       });
   }
 
+  dailyMilkRate: number = 0;
+
   // Section E: Final Calculation
   calculateFinal() {
     const totalBills = this.bills.reduce((sum, b) => sum + b.amount, 0);
-    const totalVegBills = this.bills.filter(b => b.category === 'veg').reduce((sum, b) => sum + b.amount, 0);
-    const totalNonVegBills = this.bills.filter(b => b.category === 'non-veg').reduce((sum, b) => sum + b.amount, 0);
-    const totalCommonFoodBills = this.bills.filter(b => b.category === 'common').reduce((sum, b) => sum + b.amount, 0);
-    
-    const totalLeftOut = this.leftOutItems.reduce((sum, l) => sum + l.amount, 0);
     const totalCommonExp = this.commonExpenses.reduce((sum, e) => sum + e.amount, 0);
+    const totalLeftOut = this.leftOutItems.reduce((sum, l) => sum + l.amount, 0);
 
-    // Filter by type
-    const vegStudents = this.allInmates.filter(i => i.foodType === 'veg');
-    const nonVegStudents = this.allInmates.filter(i => i.foodType === 'non-veg');
-
-    const totalVegMessDays = vegStudents.reduce((sum, i) => sum + i.messDays, 0) || 1;
-    const totalNonVegMessDays = nonVegStudents.reduce((sum, i) => sum + i.messDays, 0) || 1;
-    const totalAllMessDays = this.allInmates.reduce((sum, i) => sum + i.messDays, 0) || 1;
-
-    // Per day costs (Purchased stock this month)
-    const perDayVeg = totalVegBills / totalVegMessDays;
-    const perDayNonVeg = totalNonVegBills / totalNonVegMessDays;
+    // Mess Consumption (excluding milk)
+    const totalMessConsumption = (this.previousMonthLeftOut + totalBills + totalCommonExp) - totalLeftOut;
     
-    // common food share
-    const perDayCommonFood = (this.previousMonthLeftOut + totalCommonFoodBills - totalLeftOut) / totalAllMessDays;
+    // Total Mess Days of ALL inmates
+    const totalAllMessDays = this.allInmates.reduce((sum, i) => sum + (i.messDays || 0), 0) || 1;
     
-    const perHeadCommonExp = totalCommonExp / (this.allInmates.length || 1);
+    // Daily Mess Rate
+    const dailyMessRate = totalMessConsumption / totalAllMessDays;
 
     this.finalReport = this.allInmates.map(i => {
-      const foodBase = (i.foodType === 'veg' ? perDayVeg : perDayNonVeg) * i.messDays;
-      const commonFood = perDayCommonFood * i.messDays;
-      const total = foodBase + commonFood + perHeadCommonExp;
+      const messBill = dailyMessRate * (i.messDays || 0);
+      const milkBill = this.dailyMilkRate * (i.milkTakenDays || 0);
+      const totalAmount = messBill + milkBill;
+      
       return {
         ...i,
-        foodBase,
-        commonFood,
-        commonExpenses: perHeadCommonExp,
-        totalAmount: total
+        dailyMessRate,
+        messBill,
+        milkBill,
+        totalAmount
       };
     });
 
@@ -160,9 +151,9 @@ export class MessBillComponent implements OnInit {
   }
 
   printReport() {
-    let csv = 'Name,Role,Mess Days,Food Share,Common Expenses,Total\n';
+    let csv = 'Name,Role,Mess Days,Milk Days,Mess Bill (₹),Milk Bill (₹),Total Bill (₹)\n';
     this.finalReport.forEach(r => {
-      csv += `${r.name},${r.role},${r.messDays},${(r.foodBase + r.commonFood).toFixed(2)},${r.commonExpenses.toFixed(2)},${r.totalAmount.toFixed(2)}\n`;
+      csv += `${r.name},${r.role},${r.messDays},${r.milkTakenDays},${r.messBill.toFixed(2)},${r.milkBill.toFixed(2)},${r.totalAmount.toFixed(2)}\n`;
     });
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);

@@ -16,6 +16,8 @@ import { AuthService } from '../../../services/auth.service';
 export class FacultyAttendanceComponent implements OnInit {
   faculty: any[] = [];
   selectedDate = new Date().toISOString().split('T')[0];
+  history: any[] = [];
+  reportDate = new Date().toISOString().split('T')[0];
   loading = false;
   saving = false;
 
@@ -23,6 +25,7 @@ export class FacultyAttendanceComponent implements OnInit {
 
   ngOnInit() {
     this.loadFaculty();
+    this.loadHistory();
   }
 
   get headers() {
@@ -43,6 +46,17 @@ export class FacultyAttendanceComponent implements OnInit {
     });
   }
 
+  loadHistory() {
+    const d = new Date(this.reportDate);
+    const m = d.getMonth() + 1;
+    const y = d.getFullYear();
+    this.http.get<any>(`http://localhost:5000/api/authority/reports?month=${m}&year=${y}`, this.headers).subscribe({
+      next: res => {
+        this.history = (res.attendance || []).filter((a: any) => a.student && (a.student.role === 'faculty' || a.role === 'faculty'));
+      }
+    });
+  }
+
   submitAttendance() {
     if (!confirm(`Mark attendance for ${this.faculty.length} faculty on ${this.selectedDate}?`)) return;
     this.saving = true;
@@ -55,6 +69,7 @@ export class FacultyAttendanceComponent implements OnInit {
       next: () => {
         alert('Attendance submitted successfully');
         this.saving = false;
+        this.loadHistory();
       },
       error: err => {
         alert(err.error?.message || 'Failed to submit attendance');

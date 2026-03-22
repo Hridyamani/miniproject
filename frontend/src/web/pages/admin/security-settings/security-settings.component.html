@@ -113,25 +113,7 @@
                 </div>
             </div>
 
-            <!-- Admin Transfer -->
-            <div class="card security-card danger-card">
-                <div class="card-icon"> </div>
-                <h3>Change Admin Role</h3>
-                <p class="subtitle">Transfer the admin role for this hostel to another registered user. This action
-                    cannot be undone — you will be demoted to faculty.</p>
 
-                <div class="form-container">
-                    <div class="form-group">
-                        <label>New Admin User ID</label>
-                        <input class="form-control" [(ngModel)]="transferUserId"
-                            placeholder="Enter user ID of the new admin" />
-                    </div>
-                    <button class="btn-danger" (click)="transferAdmin()"
-                        [disabled]="!transferUserId || transferLoading">
-                        {{ transferLoading ? 'Transferring...' : 'Transfer Admin Role' }}
-                    </button>
-                </div>
-            </div>
 
             <div *ngIf="msg" [class]="msgType === 'success' ? 'toast success-toast' : 'toast error-toast'">{{ msg }}
             </div>

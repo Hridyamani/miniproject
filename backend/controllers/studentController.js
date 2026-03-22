@@ -55,6 +55,9 @@ exports.updateProfile = async (req, res) => {
     delete updates.role;
     delete updates.password;
 
+    if (updates.hostelName) updates.hostelName = updates.hostelName.toUpperCase();
+    if (updates.department) updates.department = updates.department.toUpperCase();
+
     const user = await User.findByIdAndUpdate(
       req.user._id,
       updates,
@@ -286,7 +289,10 @@ exports.markReturn = async (req, res) => {
     const now = new Date();
     const currentTime = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
-    const settings = await HostelSettings.findOne({ hostelName: req.user.hostelName });
+    // Use Case Insensitive Match for Hostel Name Settings to avoid matching failures
+    const settings = await HostelSettings.findOne({ 
+      hostelName: { $regex: new RegExp(`^${req.user.hostelName}$`, 'i') } 
+    });
 
     const HOSTEL_LAT = settings?.locationCoordinates?.latitude !== undefined
       ? parseFloat(settings.locationCoordinates.latitude)

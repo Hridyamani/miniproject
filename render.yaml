@@ -20,3 +20,9 @@ services:
         sync: false
       - key: FRONTEND_URL
         value: https://staysphere-fullstack.onrender.com # Update this if the name is different
+      - key: HOSTEL_LAT
+        value: "9.4265" # Default latitude
+      - key: HOSTEL_LON
+        value: "76.9246" # Default longitude
+      - key: RETURN_RADIUS
+        value: "200" # Default radius in meters

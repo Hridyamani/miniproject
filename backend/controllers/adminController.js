@@ -148,7 +148,35 @@ exports.createUser = async (req, res) => {
     if (userData.department) userData.department = userData.department.toUpperCase();
     if (userData.hostelName) userData.hostelName = userData.hostelName.toUpperCase();
 
-    // Generate User ID 
+    // Authority Registration Rule: Email must exist
+    if (userData.role === 'authority') {
+      const existingUser = await User.findOne({ email: userData.email });
+      if (!existingUser) {
+        return res.status(400).json({ message: 'Authority user can only be added if the email already exists in the system.' });
+      }
+      
+      // Update existing user to Authority role
+      // convert to Block Letters for consistency
+      if (userData.department) existingUser.department = userData.department.toUpperCase();
+      if (userData.hostelName) existingUser.hostelName = userData.hostelName.toUpperCase();
+      
+      existingUser.role = 'authority';
+      existingUser.authorityRole = userData.authorityRole;
+      if (userData.userId) existingUser.userId = userData.userId;
+      if (userData.name) existingUser.name = userData.name;
+      if (userData.phone) existingUser.phone = userData.phone;
+      if (userData.roomNumber) existingUser.roomNumber = userData.roomNumber;
+      
+      await existingUser.save();
+
+      return res.json({ 
+        success: true, 
+        message: `User ${existingUser.name} has been promoted to Authority role successfully.`,
+        user: { userId: existingUser.userId, name: existingUser.name }
+      });
+    }
+
+    // Standard User Creation
     if (!userData.userId) {
       userData.userId = await getNextUserId(userData.role);
     }
@@ -166,10 +194,8 @@ exports.createUser = async (req, res) => {
     const user = new User(userData);
     await user.save(); 
 
-    // Send Credentials via Email
-    let emailSent = true;
-    try {
-      await sendEmail({
+    // Send Credentials via Email in background to avoid blocking response
+    sendEmail({
         email: user.email,
         subject: 'Your Hostel Management Account Details',
         message: `Hello ${user.name},\n\nYour account has been created.\n\nUser ID: ${user.userId}\nPassword: ${rawPassword}\n\nPlease log in and change your password after first login.\n\nLogin URL: ${process.env.FRONTEND_URL || 'http://localhost:4200'}\n\nThank you.`,
@@ -187,17 +213,11 @@ exports.createUser = async (req, res) => {
             <p style="margin-top: 20px; font-size: 13px; color: #64748b;">If you did not expect this, please contact the hostel admin.</p>
           </div>
         `
-      });
-    } catch (err) {
-      console.error('Email failed to send:', err);
-      emailSent = false;
-    }
+    }).catch(err => console.error('Background User Creation Email failed:', err));
 
     res.json({ 
       success: true, 
-      message: emailSent 
-        ? 'User created successfully and email sent.' 
-        : 'User created, but credential email failed to send.',
+      message: 'User created successfully. Credentials will be sent via email shortly.',
       user: { userId: user.userId, name: user.name } 
     });
   } catch (error) {
@@ -460,15 +480,17 @@ exports.updateSecuritySettings = async (req, res) => {
 
     // 2. Update hostel settings
     if (locationCoordinates || returnRadius !== undefined || minMessCutDays !== undefined || openTime || closeTime || foodPreferenceWindow) {
-      const settingsUpdate = {};
+      const settingsUpdate = { 
+        admin: admin._id,
+        hostelName: admin.hostelName 
+      };
+      
       if (locationCoordinates) settingsUpdate.locationCoordinates = locationCoordinates;
       if (returnRadius !== undefined) settingsUpdate.returnRadius = returnRadius;
       if (minMessCutDays !== undefined) settingsUpdate.minMessCutDays = minMessCutDays;
       if (openTime) settingsUpdate.openTime = openTime;
       if (closeTime) settingsUpdate.closeTime = closeTime;
       if (foodPreferenceWindow) settingsUpdate.foodPreferenceWindow = foodPreferenceWindow;
-
-
 
       await HostelSettings.findOneAndUpdate(
         { admin: admin._id },

@@ -38,8 +38,13 @@
 
                         <div class="form-group full">
                             <label>Message Content</label>
-                            <textarea [(ngModel)]="notification.message" rows="5"
+                            <textarea [(ngModel)]="notification.message" rows="3"
                                 placeholder="Type your announcement here..."></textarea>
+                        </div>
+
+                        <div class="form-group full">
+                            <label>Attach Mess Bill (PDF - Optional)</label>
+                            <input type="file" class="form-control" accept="application/pdf" (change)="onFileSelected($event)">
                         </div>
                     </div>
 
@@ -66,6 +71,11 @@
                                 </div>
                                 <h4>{{ n.title }}</h4>
                                 <p>{{ n.message }}</p>
+                                <div *ngIf="n.pdfUrl" class="mt-2">
+                                    <a [href]="'http://localhost:5000' + n.pdfUrl" target="_blank" class="btn-pdf-view">
+                                        <i class="bi bi-file-earmark-pdf"></i> View Mess Bill PDF
+                                    </a>
+                                </div>
                             </div>
                             <button class="btn-delete" (click)="deleteNotification(n._id)" title="Delete Notification">
                                 <i class="bi bi-trash3"></i> Delete

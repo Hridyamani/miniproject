@@ -23,8 +23,12 @@ const attendanceSchema = new mongoose.Schema({
     ref: 'User'
   },
   role: {
-    type: String, // 
+    type: String, 
     required: true
+  },
+  milkTaken: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true

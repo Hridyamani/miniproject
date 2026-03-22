@@ -39,13 +39,28 @@ export class NotificationsComponent {
     });
   }
 
+  selectedFile: File | null = null;
+
   publish() {
     if (!this.notification.title || !this.notification.message) return;
     this.publishing = true;
-    this.http.post('http://localhost:5000/api/authority/publish-notification', this.notification, this.headers).subscribe({
+
+    const formData = new FormData();
+    formData.append('title', this.notification.title);
+    formData.append('message', this.notification.message);
+    formData.append('targetRole', this.notification.targetRole);
+    formData.append('type', this.notification.type);
+    if (this.selectedFile) {
+      formData.append('pdf', this.selectedFile);
+    }
+
+    this.http.post('http://localhost:5000/api/authority/publish-notification', formData, {
+      headers: new HttpHeaders({ Authorization: `Bearer ${this.auth.userValue?.token}` })
+    }).subscribe({
       next: () => {
         alert('Notification published successfully!');
         this.notification = { title: '', message: '', targetRole: 'all', type: 'general' };
+        this.selectedFile = null;
         this.publishing = false;
         this.loadNotifications();
       },
@@ -54,6 +69,12 @@ export class NotificationsComponent {
         this.publishing = false;
       }
     });
+  }
+
+  onFileSelected(event: any) {
+    if (event.target.files.length > 0) {
+      this.selectedFile = event.target.files[0];
+    }
   }
 
   deleteNotification(id: string) {

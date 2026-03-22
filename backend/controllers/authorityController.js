@@ -92,7 +92,7 @@ exports.markAttendance = async (req, res) => {
 
     const results = [];
     for (const item of attendance) {
-      const { student: studentId, status, remarks } = item;
+      const { student: studentId, status, milkTaken, remarks } = item;
       const student = await User.findById(studentId);
       if (!student) continue;
 
@@ -100,6 +100,7 @@ exports.markAttendance = async (req, res) => {
 
       if (record) {
         record.status = status;
+        record.milkTaken = (status === 'present') ? !!milkTaken : false;
         record.remarks = remarks || '';
         record.markedBy = req.user._id;
         record.role = req.user.role;
@@ -111,6 +112,7 @@ exports.markAttendance = async (req, res) => {
           roomNumber: student.roomNumber,
           date: markingDate,
           status,
+          milkTaken: (status === 'present') ? !!milkTaken : false,
           remarks: remarks || '',
           markedBy: req.user._id,
           role: req.user.role
@@ -246,12 +248,18 @@ exports.getReports = async (req, res) => {
 exports.publishNotification = async (req, res) => {
   try {
     const { title, message, targetRole, type } = req.body;
+    let pdfUrl = null;
+    if (req.file) {
+      pdfUrl = `/uploads/${req.file.filename}`;
+    }
+
     const notification = new Notification({
       title,
       message,
       targetRole: targetRole || 'all',
       type: type || 'general',
-      sender: req.user._id
+      sender: req.user._id,
+      pdfUrl
     });
     await notification.save();
     res.json({ success: true, message: 'Announcement published successfully', notification });
@@ -313,23 +321,27 @@ exports.getMessBillData = async (req, res) => {
     }
 
     const attendance = await Attendance.find({
-      date: { $gte: startDate, $lte: endDate }, status: 'present'
-    }).select('student');
+      date: { $gte: startDate, $lte: endDate }
+    }).select('student status milkTaken');
 
     const messCuts = await MessCut.find({
       status: 'approved',
-      $or: [
-        { startDate: { $lte: endDate }, endDate: { $gte: startDate } }
-      ]
+      $or: [{ startDate: { $lte: endDate }, endDate: { $gte: startDate } }]
     }).select('student startDate endDate');
 
-    // Calculate present days per inmate
-    const presentDays = {};
+    // Attendance data per inmate
+    const attendanceStats = {};
     attendance.forEach(a => {
-      presentDays[a.student] = (presentDays[a.student] || 0) + 1;
+      if (!attendanceStats[a.student]) {
+        attendanceStats[a.student] = { present: 0, milk: 0 };
+      }
+      if (a.status === 'present') {
+        attendanceStats[a.student].present++;
+        if (a.milkTaken) attendanceStats[a.student].milk++;
+      }
     });
 
-    // Calculate mess cut days per inmate within the month
+    // Calculate mess cut days per inmate WITHIN THE SELECT MONTH
     const messCutDays = {};
     messCuts.forEach(mc => {
       let cutStart = new Date(Math.max(startDate, new Date(mc.startDate)));
@@ -341,7 +353,8 @@ exports.getMessBillData = async (req, res) => {
     });
 
     const data = inmates.map(s => {
-      let pDays = presentDays[s._id] || 0;
+      const stats = attendanceStats[s._id.toString()] || { present: 0, milk: 0 };
+      let pDays = stats.present;
       let mCuts = messCutDays[s._id] || 0;
       let mDays = Math.max(0, pDays - mCuts);
       return {
@@ -353,7 +366,7 @@ exports.getMessBillData = async (req, res) => {
         presentDays: pDays,
         messCuts: mCuts,
         messDays: mDays,
-        milkTakenDays: 0 
+        milkTakenDays: stats.milk
       };
     });
 

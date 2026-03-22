@@ -31,6 +31,10 @@ const notificationSchema = new mongoose.Schema({
   isRead: {
     type: Boolean,
     default: false
+  },
+  pdfUrl: {
+    type: String,
+    default: null
   }
 }, {
   timestamps: true

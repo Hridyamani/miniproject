@@ -74,9 +74,17 @@
                 </div>
                 <div class="p-4">
                     <div class="row g-3 mb-4 entry-form bg-light p-3 rounded">
-                        <div class="col-md-6"><label>Expense Type</label><input type="text" class="form-control" [(ngModel)]="newExpense.type" placeholder="Salary, Cleaning, etc"></div>
-                        <div class="col-md-4"><label>Total Amount (₹)</label><input type="number" class="form-control" [(ngModel)]="newExpense.amount"></div>
+                        <div class="col-md-5"><label>Expense Type</label><input type="text" class="form-control" [(ngModel)]="newExpense.type" placeholder="Salary, Cleaning, etc"></div>
+                        <div class="col-md-5"><label>Total Amount (₹)</label><input type="number" class="form-control" [(ngModel)]="newExpense.amount"></div>
                         <div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary w-100" (click)="addExpense()"><i class="bi bi-plus-lg"></i> Add</button></div>
+                    </div>
+                    <!-- Milk Calculation -->
+                    <div class="row g-3 mb-4 entry-form bg-light p-3 rounded border-primary border">
+                        <div class="col-md-9"><h5 class="text-primary"><i class="bi bi-droplet-fill"></i> Milk Calculation (Separate Rate)</h5> <p class="small text-muted mb-0">Mess section provides the daily rate. Multiplied by user's milk days.</p></div>
+                        <div class="col-md-3">
+                            <label>Daily Milk Rate (₹)</label>
+                            <input type="number" class="form-control" [(ngModel)]="dailyMilkRate" placeholder="e.g., 15">
+                        </div>
                     </div>
                     <div class="table-responsive">
                         <table class="modern-table">
@@ -164,12 +172,14 @@
                 </div>
                 <div class="table-responsive">
                     <table class="modern-table">
-                        <thead><tr><th>Name</th><th>Role</th><th>Mess Days</th><th>Food Share (₹)</th><th>Common Share (₹)</th><th>Total (₹)</th></tr></thead>
+                        <thead><tr><th>Name</th><th>Role</th><th>Mess Days</th><th>Milk Days</th><th>Mess Bill (₹)</th><th>Milk Bill (₹)</th><th>Total (₹)</th></tr></thead>
                         <tbody>
                             <tr *ngFor="let s of finalReport">
-                                <td>{{s.name}}</td><td>{{s.role | titlecase}}</td><td>{{s.messDays}}</td>
-                                <td>{{ (s.foodBase + s.commonFood) | number:'1.2-2' }}</td>
-                                <td>{{ s.commonExpenses | number:'1.2-2' }}</td>
+                                <td>{{s.name}}</td><td>{{s.role | titlecase}}</td>
+                                <td>{{s.messDays}}</td>
+                                <td>{{s.milkTakenDays}}</td>
+                                <td>₹{{ s.messBill | number:'1.2-2' }}</td>
+                                <td>₹{{ s.milkBill | number:'1.2-2' }}</td>
                                 <td class="total-td"><strong>₹{{s.totalAmount | number:'1.2-2'}}</strong></td>
                             </tr>
                         </tbody>

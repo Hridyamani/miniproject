@@ -41,10 +41,10 @@ export class AuthorityDashboardComponent implements OnInit {
   }
 
   loadAttendanceForDate() {
-    this.markedStudents = {}; // Clear previous data
+    this.markedStudents = {};
+    this.markedMilk = {};
     this.facultyAttendance = [];
 
-    // Parse month/year from selectedDate
     const dateObj = new Date(this.selectedDate);
     const year = dateObj.getFullYear();
     const month = dateObj.getMonth() + 1;
@@ -58,7 +58,9 @@ export class AuthorityDashboardComponent implements OnInit {
             if (a.role === 'faculty') {
               this.facultyAttendance.push(a);
             } else {
-              this.markedStudents[a.student._id || a.student] = a.status;
+              const sid = a.student?._id || a.student;
+              this.markedStudents[sid] = a.status;
+              this.markedMilk[sid] = !!a.milkTaken;
             }
           }
         });
@@ -103,15 +105,18 @@ export class AuthorityDashboardComponent implements OnInit {
   }
 
   markedStudents: { [key: string]: string } = {};
+  markedMilk: { [key: string]: boolean } = {};
 
-  markIndividual(studentId: string, status: string) {
+  markIndividual(studentId: string, status: string, milkTaken?: boolean) {
+    const mTaken = milkTaken !== undefined ? milkTaken : !!this.markedMilk[studentId];
     this.http.post('http://localhost:5000/api/authority/attendance', {
-      attendance: [{ student: studentId, status }],
+      attendance: [{ student: studentId, status, milkTaken: mTaken }],
       date: this.selectedDate
     }, this.headers).subscribe({
       next: () => {
         this.markedStudents[studentId] = status;
-        this.loadSummary(); // Refresh stats
+        this.markedMilk[studentId] = mTaken;
+        this.loadSummary();
       },
       error: () => alert('Failed to mark attendance')
     });

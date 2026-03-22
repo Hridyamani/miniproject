@@ -51,45 +51,48 @@
                             </div>
                             <input type="text" [(ngModel)]="attendanceSearch" (input)="filterAttendanceStudents()"
                                 placeholder="Search Student..." class="search-input" />
-                            <button *ngIf="!isDayClosed" class="btn btn-warning btn-sm" (click)="markHostelClosed()">
-                                <i class="bi bi-calendar-x"></i> Mark Closed Day
-                            </button>
-                            <span *ngIf="isDayClosed" class="badge bg-warning text-dark p-2">
-                                <i class="bi bi-clock-history"></i> Hostel Closed Day
-                            </span>
+
                         </div>
                     </div>
 
                     <div class="table-container">
-                        <table class="table">
+                        <table class="modern-table">
                             <thead>
                                 <tr>
                                     <th>Room</th>
                                     <th>Student Name</th>
-                                    <th>ID</th>
-                                    <th style="text-align: right">Actions</th>
+                                    <th>Milk</th>
+                                    <th style="text-align: right">Attendance</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr *ngFor="let s of filteredAttendanceStudents">
-                                    <td class="room-cell">{{ s.roomNumber }}</td>
+                                    <td class="room-cell"><span class="room-pill">{{ s.roomNumber }}</span></td>
                                     <td>
                                         <div class="student-cell">
                                             <div class="avatar">{{ s.name[0] }}</div>
-                                            <span>{{ s.name }}</span>
+                                            <div class="name-info">
+                                                <span class="name">{{ s.name }}</span>
+                                                <span class="id">{{ s.userId }}</span>
+                                            </div>
                                         </div>
                                     </td>
-                                    <td class="id-cell">{{ s.userId }}</td>
+                                    <td>
+                                        <div class="milk-check">
+                                            <input type="checkbox" [checked]="markedMilk[s._id]" 
+                                                (change)="markIndividual(s._id, markedStudents[s._id] || 'present', $any($event.target).checked)"
+                                                [disabled]="markedStudents[s._id] === 'absent'">
+                                            <i class="bi bi-droplet-fill" [class.active]="markedMilk[s._id]"></i>
+                                        </div>
+                                    </td>
                                     <td style="text-align: right">
                                         <div class="action-btns">
                                             <button [class.active]="markedStudents[s._id] === 'present'"
-                                                [class.dimmed]="markedStudents[s._id] === 'absent'"
-                                                class="btn-sm btn-success"
-                                                (click)="markIndividual(s._id, 'present')">Present</button>
+                                                class="btn-status present"
+                                                (click)="markIndividual(s._id, 'present')">P</button>
                                             <button [class.active]="markedStudents[s._id] === 'absent'"
-                                                [class.dimmed]="markedStudents[s._id] === 'present'"
-                                                class="btn-sm btn-danger"
-                                                (click)="markIndividual(s._id, 'absent')">Absent</button>
+                                                class="btn-status absent"
+                                                (click)="markIndividual(s._id, 'absent')">A</button>
                                         </div>
                                     </td>
                                 </tr>
@@ -111,27 +114,28 @@
                     </div>
 
                     <div class="table-container">
-                        <table class="table">
+                        <table class="modern-table">
                             <thead>
                                 <tr>
+                                    <th>Faculty Details</th>
                                     <th>Department</th>
-                                    <th>Faculty Name</th>
-                                    <th>ID</th>
                                     <th style="text-align: right">Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr *ngFor="let f of facultyAttendance">
-                                    <td class="room-cell">{{ f.student?.department || 'N/A' }}</td>
                                     <td>
                                         <div class="student-cell">
-                                            <div class="avatar blue">{{ f.student?.name[0] }}</div>
-                                            <span>{{ f.student?.name }}</span>
+                                            <div class="avatar blue">{{ (f.student?.name || 'F')[0] }}</div>
+                                            <div class="name-info">
+                                                <span class="name">{{ f.student?.name || f.studentName }}</span>
+                                                <span class="id">{{ f.student?.userId }}</span>
+                                            </div>
                                         </div>
                                     </td>
-                                    <td class="id-cell">{{ f.student?.userId }}</td>
+                                    <td class="dept-cell"><div class="dept-tag">{{ f.student?.department || 'N/A' }}</div></td>
                                     <td style="text-align: right">
-                                        <span [class]="'badge ' + f.status">{{ f.status | titlecase }}</span>
+                                        <span class="status-badge" [class]="f.status">{{ f.status | titlecase }}</span>
                                     </td>
                                 </tr>
                                 <tr *ngIf="facultyAttendance.length === 0">

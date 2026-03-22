@@ -25,9 +25,7 @@ export class SecuritySettingsComponent implements OnInit {
   foodPreferenceStartDate = '';
   foodPreferenceEndDate = '';
   foodPreferenceDurationMonths = 3;
-  transferUserId = '';
   loading = false;
-  transferLoading = false;
   msg = '';
   msgType = '';
 
@@ -100,29 +98,5 @@ export class SecuritySettingsComponent implements OnInit {
     });
   }
 
-  transferAdmin() {
-    if (!this.transferUserId) return;
-    if (!confirm(`Are you sure you want to transfer admin role to "${this.transferUserId}"? You will be demoted to faculty. This cannot be undone.`)) return;
 
-    this.transferLoading = true;
-    this.msg = '';
-
-    this.http.post('http://localhost:5000/api/admin/transfer-admin', { newAdminUserId: this.transferUserId }, { headers: this.headers }).subscribe({
-      next: (res: any) => {
-        this.msg = res.message || 'Admin transferred!';
-        this.msgType = 'success';
-        this.transferLoading = false;
-        // Log out since user is no longer admin
-        setTimeout(() => {
-          this.auth.logout();
-          window.location.href = '/login';
-        }, 2000);
-      },
-      error: (err) => {
-        this.msg = err.error?.message || 'Failed to transfer admin';
-        this.msgType = 'error';
-        this.transferLoading = false;
-      }
-    });
-  }
 }

@@ -10,33 +10,7 @@
             </div>
 
             <div class="approval-grid">
-                <!-- Mess Cut Card -->
-                <div class="card approval-card" *ngIf="canApproveMessCuts">
-                    <div class="card-header">
-                        <h3><i class="bi bi-egg-fried"></i> Mess Cut Requests ({{ messCuts.length }})</h3>
-                    </div>
-                    <div class="request-list">
-                        <div *ngIf="messCuts.length === 0" class="empty-list">No pending mess-cut requests.</div>
-                        <div *ngFor="let r of messCuts" class="req-item">
-                            <div class="req-main">
-                                <div class="student-info">
-                                    <span class="name">{{ r.student?.name }}</span>
-                                    <span class="meta">Room {{ r.student?.roomNumber }}</span>
-                                </div>
-                                <div class="date-range">{{ r.startDate | date:'dd MMM' }} — {{ r.endDate | date:'dd MMM
-                                    yyyy' }}</div>
-                                <p class="reason" *ngIf="r.reason">{{ r.reason }}</p>
-                            </div>
-                            <div class="req-actions">
-                                <input class="form-control" [(ngModel)]="r._remarks" placeholder="Add remarks..." />
-                                <div class="btn-group">
-                                    <button class="btn-approve" (click)="updateMessCut(r, 'approved')"><i class="bi bi-check-circle"></i> Approve</button>
-                                    <button class="btn-reject" (click)="updateMessCut(r, 'rejected')"><i class="bi bi-x-circle"></i> Reject</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
 
                 <!-- Home Going Card -->
                 <div class="card approval-card" *ngIf="canApproveHomeGoing">

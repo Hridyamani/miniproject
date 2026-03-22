@@ -263,6 +263,7 @@ export class UserManagementComponent implements OnInit {
   }
 
   openBulkUpload() {
+    this.downloadTemplate();
     this.showBulkModal = true;
     this.bulkStudents = [];
     this.uploadError = '';

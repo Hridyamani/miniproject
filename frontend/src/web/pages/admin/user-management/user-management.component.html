@@ -12,9 +12,6 @@
                     <button class="btn-outline" (click)="openBulkUpload()">
                         <i class="bi bi-file-earmark-arrow-up"></i> Bulk Upload
                     </button>
-                    <a href="http://localhost:5000/api/admin/students/download-template" download class="btn-download" title="Download Template">
-                        <i class="bi bi-download"></i> Template
-                    </a>
                 </div>
             </div>
 
@@ -376,9 +373,14 @@
                         <div class="upload-zone" *ngIf="!bulkStudents.length">
                             <i class="bi bi-cloud-arrow-up"></i>
                             <p>Upload Excel file containing student data</p>
-                            <button class="btn-upload-select" (click)="fileInput.click()" [disabled]="uploading">
-                                {{ uploading ? 'Processing...' : 'Select Excel File' }}
-                            </button>
+                            <div class="upload-actions">
+                                <button class="btn-download-modal" (click)="downloadTemplate()">
+                                    <i class="bi bi-download"></i> 1. Download Template
+                                </button>
+                                <button class="btn-upload-select" (click)="fileInput.click()" [disabled]="uploading">
+                                    <i class="bi bi-file-earmark-arrow-up"></i> {{ uploading ? 'Processing...' : '2. Select & Upload File' }}
+                                </button>
+                            </div>
                             <p class="helper-text">Only .xlsx or .xls files supported.</p>
                         </div>
 

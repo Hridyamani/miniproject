@@ -5,14 +5,14 @@
         <main class="page-content">
 
             <div class="stats-grid">
-                <div class="stat-card orange" routerLink="/authority/requests">
+                <div class="stat-card orange">
                     <div class="stat-icon"><i class="bi bi-cup-hot"></i></div>
                     <div class="stat-details">
                         <span class="stat-value">{{ summary.pendingMessCuts }}</span>
-                        <span class="stat-label">Pending Mess Cuts</span>
+                        <span class="stat-label"> Mess Cuts</span>
                     </div>
                 </div>
-                <div class="stat-card purple" routerLink="/authority/requests">
+                <div class="stat-card purple">
                     <div class="stat-icon"><i class="bi bi-house-door"></i></div>
                     <div class="stat-details">
                         <span class="stat-value">{{ summary.pendingHomeGoings }}</span>
@@ -24,13 +24,6 @@
                     <div class="stat-details">
                         <span class="stat-value">{{ summary.todayOutgoings }}</span>
                         <span class="stat-label">Today's Outgoings</span>
-                    </div>
-                </div>
-                <div class="stat-card green">
-                    <div class="stat-icon"><i class="bi bi-cup-straw"></i></div>
-                    <div class="stat-details">
-                        <span class="stat-value">{{ summary.activeMessCuts }}</span>
-                        <span class="stat-label">Active Mess Cuts</span>
                     </div>
                 </div>
             </div>
@@ -146,6 +139,24 @@
                     </div>
                 </div>
             </div>
+
+            <section class="notifications-section mt mb-4">
+                <div class="section-header">
+                    <h2>Recent Announcements</h2>
+                    <a class="view-all" [routerLink]="['/authority/notifications']">View All</a>
+                </div>
+                <div class="card notif-card">
+                    <div *ngIf="notifications.length === 0" class="empty-state">No new announcements</div>
+                    <div *ngFor="let n of notifications.slice(0,3)" class="notif-item">
+                        <div class="notif-bullet"></div>
+                        <div class="notif-body">
+                            <h6>{{ n.title }}</h6>
+                            <p>{{ n.message }}</p>
+                            <span class="notif-time">{{ n.createdAt | date:'shortTime' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 </div>

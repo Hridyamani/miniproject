@@ -27,9 +27,8 @@ export class MessBillComponent implements OnInit {
   commonExpenses: any[] = [];
   newExpense = { type: '', amount: 0 };
 
-  // STAGE C: Left Out Items
-  leftOutItems: any[] = [];
-  newLeftOut = { item: '', amount: 0 };
+  // STAGE C: Stock Valuation
+  extraStockAmount: number = 0;
 
   // STAGE D: Data
   allInmates: any[] = []; 
@@ -72,14 +71,7 @@ export class MessBillComponent implements OnInit {
   }
   removeExpense(i: number) { this.commonExpenses.splice(i, 1); }
 
-  // Section C Actions
-  addLeftOut() {
-    if (this.newLeftOut.item && this.newLeftOut.amount > 0) {
-      this.leftOutItems.push({ ...this.newLeftOut });
-      this.newLeftOut = { item: '', amount: 0 };
-    }
-  }
-  removeLeftOut(i: number) { this.leftOutItems.splice(i, 1); }
+
 
   // Navigation
   goToB() { if (this.bills.length > 0) this.stage = 2; else alert('Add at least one bill'); }
@@ -107,10 +99,10 @@ export class MessBillComponent implements OnInit {
   calculateFinal() {
     const totalBills = this.bills.reduce((sum, b) => sum + b.amount, 0);
     const totalCommonExp = this.commonExpenses.reduce((sum, e) => sum + e.amount, 0);
-    const totalLeftOut = this.leftOutItems.reduce((sum, l) => sum + l.amount, 0);
+    const totalExtraStock = this.extraStockAmount;
 
     // Mess Consumption
-    const totalMessConsumption = (this.previousMonthLeftOut + totalBills + totalCommonExp) - totalLeftOut;
+    const totalMessConsumption = (this.previousMonthLeftOut + totalBills + totalCommonExp) - totalExtraStock;
     
     // Total Mess Days of ALL inmates
     const totalAllMessDays = this.allInmates.reduce((sum, i) => sum + (i.messDays || 0), 0) || 1;
@@ -133,7 +125,7 @@ export class MessBillComponent implements OnInit {
     });
 
     // Save current leftovers to backend
-    this.saveInventory(totalLeftOut);
+    this.saveInventory(totalExtraStock);
 
     this.stage = 5;
   }

@@ -49,7 +49,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   loadStats() {
-    this.http.get<any>('http://localhost:5000/api/admin/dashboard-stats', this.headers).subscribe({
+    this.http.get<any>('http://localhost:5000/api/admin/stats', this.headers).subscribe({
       next: (res) => {
         this.stats = res.stats;
         this.isLoading = false;

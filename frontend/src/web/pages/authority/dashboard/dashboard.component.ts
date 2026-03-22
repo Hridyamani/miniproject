@@ -27,6 +27,7 @@ export class AuthorityDashboardComponent implements OnInit {
   facultyAttendance: any[] = [];
   filteredAttendanceStudents: any[] = [];
   attendanceSearch = '';
+  notifications: any[] = [];
   selectedDate = new Date().toISOString().split('T')[0];
   selectedStudents = new Set<string>();
   isDayClosed = false;
@@ -38,6 +39,7 @@ export class AuthorityDashboardComponent implements OnInit {
     this.loadSummary();
     this.loadStudents();
     this.loadAttendanceForDate();
+    this.loadNotifications();
   }
 
   loadAttendanceForDate() {
@@ -135,5 +137,13 @@ export class AuthorityDashboardComponent implements OnInit {
         error: (err) => alert(err.error?.message || 'Failed to mark closed day')
       });
     }
+  }
+
+  loadNotifications() {
+    this.http.get<any>('http://localhost:5000/api/authority/notifications', this.headers).subscribe({
+      next: res => {
+        this.notifications = res.notifications || [];
+      }
+    });
   }
 }

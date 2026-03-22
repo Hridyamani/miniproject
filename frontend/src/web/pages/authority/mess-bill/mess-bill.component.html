@@ -14,7 +14,7 @@
                 <div class="step-divider"></div>
                 <div class="step" [class.active]="stage >= 2">B. Expenses</div>
                 <div class="step-divider"></div>
-                <div class="step" [class.active]="stage >= 3">C. Left Out</div>
+                <div class="step" [class.active]="stage >= 3">C. Stock Valuation</div>
                 <div class="step-divider"></div>
                 <div class="step" [class.active]="stage >= 4">D. Review</div>
                 <div class="step-divider"></div>
@@ -102,35 +102,31 @@
                 </div>
             </div>
 
-            <!-- SECTION C: Left Out Items -->
+            <!-- SECTION C: Stock Valuation -->
             <div *ngIf="stage === 3" class="card premium-card">
                 <div class="card-header border-bottom">
-                    <h3>Section C: Inventory & Left Out Items ( stock valuation )</h3>
+                    <h3>Section C: Left Stock & Extra Stock</h3>
                 </div>
                 <div class="p-4">
                     <div class="row mb-3 bg-light p-3 rounded border align-items-center">
                         <div class="col-md-8">
-                            <h5 class="mb-0 text-muted"><i class="bi bi-arrow-return-right"></i> Previous Month Left-Out (Carry Forward)</h5>
-                            <small class="text-muted">This was the remaining stock from last month, now added to current consumption.</small>
+                            <h5 class="mb-0 text-muted"><i class="bi bi-arrow-return-right"></i> Left Stock (Previous Month)</h5>
+                            <small class="text-muted">Stock amount left in previous months. This is added to your total consumption.</small>
                         </div>
                         <div class="col-md-4 text-end">
                             <h4 class="mb-0 text-primary">₹{{previousMonthLeftOut | number:'1.2-2'}}</h4>
                         </div>
                     </div>
 
-                    <div class="row g-3 mb-4 entry-form bg-light p-3 rounded">
-                        <div class="col-md-6"><label>Item Name</label><input type="text" class="form-control" [(ngModel)]="newLeftOut.item" placeholder="Residual Stock"></div>
-                        <div class="col-md-4"><label>Amount Left (₹)</label><input type="number" class="form-control" [(ngModel)]="newLeftOut.amount"></div>
-                        <div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary w-100" (click)="addLeftOut()"><i class="bi bi-plus-lg"></i> Add</button></div>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="modern-table">
-                            <thead><tr><th>Item</th><th>Amount Left</th><th>Action</th></tr></thead>
-                            <tbody>
-                                <tr *ngFor="let l of leftOutItems; let i = index"><td>{{l.item}}</td><td><strong>₹{{l.amount}}</strong></td><td><button class="btn btn-sm text-danger" (click)="removeLeftOut(i)"><i class="bi bi-trash"></i></button></td></tr>
-                                <tr *ngIf="leftOutItems.length === 0"><td colspan="3" class="text-center p-4">No left out items yet.</td></tr>
-                            </tbody>
-                        </table>
+                    <div class="row g-3 mb-4 entry-form bg-light p-3 rounded border-success border">
+                        <div class="col-md-12">
+                            <h5 class="text-success"><i class="bi bi-box-seam"></i> Extra Stock (Current Month)</h5>
+                            <p class="small text-muted mb-0">Stock amount left in the current month. This amount is subtracted from your total consumption.</p>
+                        </div>
+                        <div class="col-md-4">
+                            <label>Extra Stock Amount (₹)</label>
+                            <input type="number" class="form-control form-control-lg text-success fw-bold" [(ngModel)]="extraStockAmount" placeholder="e.g., 5000">
+                        </div>
                     </div>
                 </div>
                 <div class="d-flex justify-content-between p-4 border-top">
@@ -148,7 +144,7 @@
                 <div class="p-4">
                     <div class="table-responsive" style="max-height: 500px;">
                         <table class="modern-table">
-                            <thead><tr><th>Inmate</th><th>Type</th><th>Food</th><th>Present Days</th><th>Mess Cuts (Approved)</th><th>Mess Cuts (Deducted)</th><th>Final Mess Days</th></tr></thead>
+                            <thead><tr><th>Inmate</th><th>Type</th><th>Food</th><th>Present Days</th><th>Mess Cuts (Approved)</th><th>Mess Cuts (Deducted)</th><th>Final Mess Days</th><th>Milk Days</th></tr></thead>
                             <tbody>
                                 <tr *ngFor="let i of allInmates">
                                     <td><strong>{{i.name}}</strong><br><small>{{i.userId}}</small></td>
@@ -162,6 +158,7 @@
                                         <small class="text-muted" *ngIf="i.effectiveMessCuts < i.messCuts"> ({{i.messCuts - i.effectiveMessCuts}} on absent days)</small>
                                     </td>
                                     <td><strong>{{i.messDays}}</strong></td>
+                                    <td><input type="number" class="form-control form-control-sm" style="width: 70px;" [(ngModel)]="i.milkTakenDays"></td>
                                 </tr>
                             </tbody>
                         </table>

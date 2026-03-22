@@ -13,12 +13,6 @@
     display: flex;
     align-items: center;
     gap: 16px;
-    cursor: pointer;
-    transition: transform .2s;
-}
-
-.stat-card:hover {
-    transform: translateY(-4px);
 }
 
 .stat-icon {
@@ -425,4 +419,71 @@
     border-radius: 4px;
     display: inline-block;
     font-weight: 600;
+}
+
+/* Announcements / Notifications Section */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.view-all {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.mt {
+    margin-top: 40px;
+}
+
+.notif-card {
+    padding: 8px 0;
+}
+
+.notif-item {
+    display: flex;
+    gap: 16px;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+}
+
+.notif-item:last-child {
+    border-bottom: none;
+}
+
+.notif-bullet {
+    width: 8px;
+    height: 8px;
+    background: var(--primary);
+    border-radius: 50%;
+    margin-top: 6px;
+}
+
+.notif-body h6 {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.notif-body p {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 4px;
+}
+
+.notif-time {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.empty-state {
+    padding: 32px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
 }

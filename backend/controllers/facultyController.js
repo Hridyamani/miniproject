@@ -195,7 +195,7 @@ exports.getSelfMessCuts = async (req, res) => {
   }
 };
 
-// --- Home Going Section ---
+// Home Going Section
 
 exports.markHomeGoing = async (req, res) => {
   try {
@@ -238,7 +238,7 @@ exports.getSelfHomeGoings = async (req, res) => {
   }
 };
 
-// --- Notifications Section ---
+//  Notifications Section
 
 exports.getNotifications = async (req, res) => {
   try {
@@ -248,7 +248,7 @@ exports.getNotifications = async (req, res) => {
     const twoWeeksAgo = new Date();
     twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
 
-    // Auto-delete request status notifications older than 2 weeks
+    // Auto-delete request status notifications older 
     await Notification.deleteMany({
       type: 'request',
       createdAt: { $lt: twoWeeksAgo }
@@ -263,7 +263,7 @@ exports.getNotifications = async (req, res) => {
       createdAt: { $gte: oneMonthAgo }
     }).sort({ createdAt: -1 });
 
-    // Inject dynamic notification for food window if open
+    //  dynamic notification for food window if open
     const HostelSettings = require('../models/HostelSettings');
     const settings = await HostelSettings.findOne({ hostelName: req.user.hostelName });
     if (settings && settings.foodPreferenceWindow && settings.foodPreferenceWindow.startDate && settings.foodPreferenceWindow.endDate) {

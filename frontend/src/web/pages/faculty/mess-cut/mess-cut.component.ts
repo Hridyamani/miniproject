@@ -59,11 +59,17 @@ export class FacultyMessCutComponent implements OnInit {
 
     this.http.post('http://localhost:5000/api/faculty/mess-cut', this.messCutForm, this.headers).subscribe({
       next: () => {
-        alert('Mess cut request submitted successfully');
         this.messCutForm = { startDate: '', endDate: '' };
         this.loadMessCuts();
       },
       error: (err) => alert(err.error?.message || 'Submission failed')
     });
+  }
+
+  calculateDays(start: string, end: string): number {
+    const s = new Date(start);
+    const e = new Date(end);
+    const diffTime = Math.abs(e.getTime() - s.getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
   }
 }

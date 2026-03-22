@@ -4,53 +4,70 @@
         <web-topbar [pageTitle]="'Mess Cut Requests'" [userName]="user?.name || 'Faculty'"></web-topbar>
         <main class="page-content animate-fade-in">
 
-            <div class="card p-24 mb-24">
+            <div class="card premium-card animate-slide-up">
                 <div class="section-header">
-                    <h3>Request Mess Cut</h3>
-                    <i class="bi bi-cup-straw section-icon orange-text"></i>
-                </div>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>From Date</label>
-                        <input type="date" class="form-control" [(ngModel)]="messCutForm.startDate" />
+                    <div class="title-group">
+                        <h3>Request Mess Cut</h3>
+                        <p class="subtitle">Select the date range for your mess cut period</p>
                     </div>
-                    <div class="form-group">
-                        <label>To Date</label>
-                        <input type="date" class="form-control" [(ngModel)]="messCutForm.endDate" />
+                    <i class="bi bi-cup-straw stat-icon orange-text"></i>
+                </div>
+                
+                <div class="form-row mt-16">
+                    <div class="form-group flex-1">
+                        <label class="form-label font-600">From Date</label>
+                        <input type="date" class="form-control modern-input" [(ngModel)]="messCutForm.startDate" />
+                    </div>
+                    <div class="form-group flex-1">
+                        <label class="form-label font-600">To Date</label>
+                        <input type="date" class="form-control modern-input" [(ngModel)]="messCutForm.endDate" />
                     </div>
                 </div>
-                <button class="primary-btn mt-16" (click)="submitMessCut()">
-                    Submit Request <i class="bi bi-send-fill ml-8"></i>
-                </button>
+
+                <div class="actions mt-24">
+                    <button class="primary-btn w-100 btn-orange" (click)="submitMessCut()">
+                        Submit Mess Cut Request <i class="bi bi-send-fill ml-8"></i>
+                    </button>
+                    <p class="hint mt-8 text-center text-muted small">Requests are sent to the authority for verification.</p>
+                </div>
             </div>
 
-            <div class="card p-24">
+            <div class="card premium-card mt-32 animate-slide-up" style="animation-delay: 0.1s;">
                 <div class="section-header">
-                    <h3>Mess Cut History</h3>
-                    <i class="bi bi-receipt section-icon orange-text"></i>
+                    <div class="title-group">
+                        <h3>My Mess Cut History</h3>
+                        <p class="subtitle">Tracking your previous and pending requests</p>
+                    </div>
+                    <i class="bi bi-clock-history stat-icon text-muted"></i>
                 </div>
-                <div class="table-responsive">
-                    <table class="history-table">
+                
+                <div class="history-container">
+                    <table class="modern-table">
                         <thead>
                             <tr>
-                                <th>From</th>
-                                <th>To</th>
-                                <th>Status</th>
+                                <th>Period Range</th>
+                                <th>Total Days</th>
+                                <th style="text-align: right">Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr *ngFor="let item of messCutHistory">
-                                <td>{{ item.startDate | date:'dd MMM yyyy' }}</td>
-                                <td>{{ item.endDate | date:'dd MMM yyyy' }}</td>
                                 <td>
-                                    <span class="status-badge" [class.pending]="item.status === 'pending'"
-                                        [class.approved]="item.status === 'approved'">
+                                    <div class="date-range">
+                                        <span class="d-text">{{ item.startDate | date:'dd MMM' }}</span>
+                                        <i class="bi bi-arrow-right mx-8"></i>
+                                        <span class="d-text">{{ item.endDate | date:'dd MMM yyyy' }}</span>
+                                    </div>
+                                </td>
+                                <td><span class="days-pill">{{ calculateDays(item.startDate, item.endDate) }} Days</span></td>
+                                <td style="text-align: right">
+                                    <span class="status-pill" [class]="item.status">
                                         {{ item.status | titlecase }}
                                     </span>
                                 </td>
                             </tr>
                             <tr *ngIf="messCutHistory.length === 0">
-                                <td colspan="3" class="empty-td text-center">No history found</td>
+                                <td colspan="3" class="empty-state">No mess cut requests found.</td>
                             </tr>
                         </tbody>
                     </table>

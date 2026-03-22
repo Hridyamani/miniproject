@@ -371,17 +371,19 @@
                         <input type="file" (change)="onFileSelected($event)" accept=".xlsx, .xls" #fileInput hidden />
                         
                         <div class="upload-zone" *ngIf="!bulkStudents.length">
-                            <i class="bi bi-cloud-arrow-up"></i>
-                            <p>Upload Excel file containing student data</p>
+                            <div class="zone-info">
+                                <i class="bi bi-file-earmark-excel purple-text big-icon"></i>
+                                <h4>Import Student Data</h4>
+                                <p>Please fill the downloaded Excel template and upload it here.</p>
+                            </div>
+                            
                             <div class="upload-actions">
-                                <button class="btn-download-modal" (click)="downloadTemplate()">
-                                    <i class="bi bi-download"></i> 1. Download Template
-                                </button>
-                                <button class="btn-upload-select" (click)="fileInput.click()" [disabled]="uploading">
-                                    <i class="bi bi-file-earmark-arrow-up"></i> {{ uploading ? 'Processing...' : '2. Select & Upload File' }}
+                                <button class="btn-primary-fancy upload-main" (click)="fileInput.click()" [disabled]="uploading">
+                                    <i class="bi bi-cloud-arrow-up"></i> {{ uploading ? 'Processing File...' : 'Select & Upload Completed File' }}
                                 </button>
                             </div>
-                            <p class="helper-text">Only .xlsx or .xls files supported.</p>
+                            <p class="helper-text mt-16">Supported formats: <strong>.xlsx, .xls</strong></p>
+                            <p class="notice-text">Ensure all mandatory fields (Email, Phone, Admission No) are entered.</p>
                         </div>
 
                         <div class="preview-zone" *ngIf="bulkStudents.length">

@@ -11,7 +11,7 @@ const XLSX = require('xlsx');
 const generatePassword = require('../utils/passwordGenerator');
 const sendEmail = require('../utils/sendEmail');
 
-// Helper: Serial Generator (e.g., STU-2024-001)
+//  User IDGenerator
 const getNextUserId = async (role) => {
   const currentYear = new Date().getFullYear();
   const rolePrefixes = {
@@ -22,7 +22,7 @@ const getNextUserId = async (role) => {
   };
   const prefix = rolePrefixes[role] || role.substring(0, 3).toUpperCase();
 
-  // Find users from this year with this specific role prefix
+  // Find users from this year with this specific role 
   const regex = new RegExp(`^${prefix}-${currentYear}-`);
   const count = await User.countDocuments({ role, userId: regex });
 
@@ -34,7 +34,7 @@ const getNextUserId = async (role) => {
 // Get dashboard statistics
 exports.getDashboardStats = async (req, res) => {
   try {
-    // 1. Today's Activities
+    //  Today's Activities
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
     const endOfToday = new Date(startOfToday);
@@ -54,13 +54,13 @@ exports.getDashboardStats = async (req, res) => {
       status: 'approved'
     });
 
-    // 2. Pending Requests Summary
+    // Pending Requests Summary
     const pendingMessCuts = await MessCut.countDocuments({ status: 'pending' });
     const pendingHomeGoings = await HomeGoing.countDocuments({ status: 'pending' });
 
     const totalPending = pendingMessCuts + pendingHomeGoings;
 
-    // 3. Weekly Activity
+    // Weekly Activity
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     sevenDaysAgo.setHours(0, 0, 0, 0);
@@ -155,7 +155,6 @@ exports.createUser = async (req, res) => {
         return res.status(400).json({ message: 'Authority user can only be added if the email already exists in the system.' });
       }
       
-      // Update existing user to Authority role
       // convert to Block Letters for consistency
       if (userData.department) existingUser.department = userData.department.toUpperCase();
       if (userData.hostelName) existingUser.hostelName = userData.hostelName.toUpperCase();
@@ -194,7 +193,7 @@ exports.createUser = async (req, res) => {
     const user = new User(userData);
     await user.save(); 
 
-    // Send Credentials via Email in background to avoid blocking response
+    // Send Credentials via Email 
     sendEmail({
         email: user.email,
         subject: 'Your Hostel Management Account Details',
@@ -217,7 +216,7 @@ exports.createUser = async (req, res) => {
 
     res.json({ 
       success: true, 
-      message: 'User created successfully. Credentials will be sent via email shortly.',
+      message: 'User created successfully. Credentials will be sent via email.',
       user: { userId: user.userId, name: user.name } 
     });
   } catch (error) {

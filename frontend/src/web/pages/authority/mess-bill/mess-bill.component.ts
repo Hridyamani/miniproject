@@ -109,7 +109,7 @@ export class MessBillComponent implements OnInit {
     const totalCommonExp = this.commonExpenses.reduce((sum, e) => sum + e.amount, 0);
     const totalLeftOut = this.leftOutItems.reduce((sum, l) => sum + l.amount, 0);
 
-    // Mess Consumption (excluding milk)
+    // Mess Consumption
     const totalMessConsumption = (this.previousMonthLeftOut + totalBills + totalCommonExp) - totalLeftOut;
     
     // Total Mess Days of ALL inmates

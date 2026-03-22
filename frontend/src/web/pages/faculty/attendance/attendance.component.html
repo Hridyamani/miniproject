@@ -4,116 +4,73 @@
         <web-topbar [pageTitle]="'Faculty Attendance'" [userName]="user?.name || 'Faculty'"></web-topbar>
         <main class="page-content animate-fade-in">
 
-            <div class="card p-24 mb-24">
+            <div class="card premium-card animate-slide-up">
                 <div class="section-header">
                     <div class="title-group">
-                        <h3>Daily Attendance</h3>
-                        <p class="text-muted">Mark your presence for today ({{ today | date:'dd MMM yyyy' }})</p>
+                        <h3>Daily Presence Marking</h3>
+                        <p class="subtitle">Mark your attendance for today ({{ today | date:'dd MMM yyyy' }})</p>
                     </div>
-                    <i class="bi bi-check2-circle section-icon green-text"></i>
+                    <i class="bi bi-person-check-fill stat-icon purple-text"></i>
                 </div>
 
-                <div class="attendance-status-box" [class.marked]="hasMarkedToday">
-                    <div class="status-info">
-                        <i class="bi" [class.bi-check-circle-fill]="hasMarkedToday"
-                            [class.bi-clock-history]="!hasMarkedToday"></i>
-                        <span>{{ hasMarkedToday ? 'Attendance Recorded' : 'Mark your Attendance' }}</span>
+                <div class="attendance-box" [class.marked]="hasMarkedToday">
+                    <div class="status-indicator">
+                        <div class="indicator-icon" [class.success]="hasMarkedToday">
+                            <i class="bi" [class.bi-check-lg]="hasMarkedToday" [class.bi-clock]="!hasMarkedToday"></i>
+                        </div>
+                        <div class="indicator-text">
+                            <span class="main">{{ hasMarkedToday ? 'Attendance Recorded' : 'Ready to Mark' }}</span>
+                            <span class="sub text-muted">{{ hasMarkedToday ? 'Your presence has been logged in the system.' : 'Please select your status for today.' }}</span>
+                        </div>
                     </div>
-                    <div class="attendance-actions">
-                        <button class="primary-btn btn-success" [disabled]="hasMarkedToday"
-                            (click)="markAttendance('present')">
-                            <i class="bi bi-person-check"></i> Present
+                    
+                    <div class="marking-actions">
+                        <button class="btn-present" [disabled]="hasMarkedToday" (click)="markAttendance('present')">
+                            <i class="bi bi-check2"></i> Mark Present
                         </button>
-                        <button class="primary-btn btn-danger" [disabled]="hasMarkedToday"
-                            (click)="markAttendance('absent')">
-                            <i class="bi bi-person-x"></i> Leave
+                        <button class="btn-absent" [disabled]="hasMarkedToday" (click)="markAttendance('absent')">
+                            <i class="bi bi-x-lg"></i> Mark Absent / Leave
                         </button>
                     </div>
                 </div>
             </div>
 
             <!-- Attendance History Card -->
-            <div class="card p-24 mb-24">
+            <div class="card premium-card mt-32 animate-slide-up" style="animation-delay: 0.1s;">
                 <div class="section-header">
-                    <h3>Attendance History</h3>
-                    <i class="bi bi-clock-history section-icon blue-text"></i>
+                    <div class="title-group">
+                        <h3>My Attendance History</h3>
+                        <p class="subtitle">Last 30 days of attendance records</p>
+                    </div>
+                    <div class="header-actions">
+                        <span class="history-count">{{ attendanceHistory.length }} Records Found</span>
+                    </div>
                 </div>
 
-                <div class="table-responsive">
-                    <table class="history-table">
+                <div class="history-container">
+                    <table class="modern-table">
                         <thead>
                             <tr>
                                 <th>Date</th>
-                                <th>Status</th>
+                                <th>Marked Time</th>
+                                <th style="text-align: right">Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr *ngFor="let item of attendanceHistory">
-                                <td>{{ item.date | date:'dd MMM yyyy' }}</td>
-                                <td>
-                                    <span class="status-badge" [class.success]="item.status === 'present'"
-                                        [class.absent]="item.status === 'absent'">
+                                <td><strong>{{ item.date | date:'dd MMM yyyy' }}</strong></td>
+                                <td class="text-muted"><small>{{ item.createdAt | date:'shortTime' }}</small></td>
+                                <td style="text-align: right">
+                                    <span class="status-pill" [class]="item.status">
                                         {{ item.status | titlecase }}
                                     </span>
                                 </td>
                             </tr>
                             <tr *ngIf="attendanceHistory.length === 0">
-                                <td colspan="2" class="empty-td text-center">No history found</td>
+                                <td colspan="3" class="empty-state">No attendance records found yet.</td>
                             </tr>
                         </tbody>
                     </table>
-                </div>
-            </div>
-
-            <!-- Student Attendance Marking -->
-            <div class="card p-24">
-                <div class="section-header">
-                    <div class="title-group">
-                        <h3>Student Attendance Marking</h3>
-                        <p class="text-muted">Mark attendance for current students.</p>
-                    </div>
-                    <div class="date-picker-group">
-                        <input type="date" [(ngModel)]="selectedDate" class="form-control" style="width: auto;" />
-                    </div>
-                </div>
-
-                <div class="table-responsive student-marking-table mt-16">
-                    <table class="history-table">
-                        <thead>
-                            <tr>
-                                <th>Student Details</th>
-                                <th>Room</th>
-                                <th>Department</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let s of students">
-                                <td>
-                                    <div class="s-info">
-                                        <strong>{{ s.name }}</strong>
-                                        <small>{{ s.userId }}</small>
-                                    </div>
-                                </td>
-                                <td>{{ s.roomNumber }}</td>
-                                <td>{{ s.department || '—' }}</td>
-                                <td>
-                                    <div class="marking-btns">
-                                        <button class="btn-sm" [class.active]="s.status === 'present'"
-                                            (click)="s.status = 'present'">Present</button>
-                                        <button class="btn-sm" [class.active]="s.status === 'absent'"
-                                            (click)="s.status = 'absent'">Absent</button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="action-footer mt-24 text-right" style="display: flex; justify-content: flex-end;">
-                    <button class="primary-btn" [disabled]="markingStudents" (click)="submitStudentAttendance()">
-                        {{ markingStudents ? 'Submitting...' : 'Submit Attendance' }}
-                    </button>
                 </div>
             </div>
 

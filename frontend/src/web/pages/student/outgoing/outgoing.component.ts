@@ -33,6 +33,10 @@ export class OutgoingComponent implements OnInit {
     return { headers: new HttpHeaders({ Authorization: `Bearer ${this.auth.userValue?.token}` }) };
   }
 
+  get hasActiveOutgoing(): boolean {
+    return this.records.some(r => r.status === 'active');
+  }
+
   loadRecords() {
     this.http.get<any>('http://localhost:5000/api/student/outgoing', this.headers).subscribe({
       next: res => this.records = res.outgoings || [],
@@ -42,6 +46,13 @@ export class OutgoingComponent implements OnInit {
 
   submitMarking() {
     if (!this.date || !this.timeLeaving || !this.place) return;
+
+    if (this.hasActiveOutgoing) {
+      this.msg = 'You already have an active outgoing. Please mark your return first.';
+      this.msgType = 'error';
+      return;
+    }
+
     this.loading = true;
     this.msg = '';
 

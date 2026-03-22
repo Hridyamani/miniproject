@@ -75,7 +75,7 @@ exports.registerAdmin = async (req, res) => {
       return res.status(400).json({ message: 'Hostel Name is required for admin registration' });
     }
 
-    // Check if an admin already exists for this hostel
+    // Check if an admin already exists
     const existingAdmin = await User.findOne({ role: 'admin', hostelName });
     if (existingAdmin) {
       return res.status(400).json({ message: `An admin already exists for hostel "${hostelName}". Only that admin can transfer the role.` });
@@ -111,7 +111,7 @@ exports.registerAdmin = async (req, res) => {
       user: { userId: user.userId, role: user.role, hostelName }
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server not responding', error: error.message });
   }
 };
 
@@ -122,13 +122,13 @@ exports.forgotPassword = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(404).json({ message: 'No user found with that email' });
+      return res.status(404).json({ message: 'No user found with this email' });
     }
 
     // Generate reset token
     const resetToken = crypto.randomBytes(20).toString('hex');
     user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-    user.resetPasswordExpires = Date.now() + 30 * 60 * 1000; // 30 minutes
+    user.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
 
     await user.save();
 
@@ -140,12 +140,9 @@ exports.forgotPassword = async (req, res) => {
     const message = `Hello,
 
 We received a request to reset the password for your StaySphere ${user.role} account.
-
 To create a new password, please click the link below:
-
 ${resetUrl}
-
-For security reasons, this link will expire in 30 minutes.
+This link is valid for 10 minutes.
 
 If you did not request a password reset, you can safely ignore this email. Your account will remain unchanged.
 
@@ -196,7 +193,7 @@ StaySphere Support Team`;
       return res.status(500).json({ message: 'Email could not be sent' });
     }
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server not responding', error: error.message });
   }
 };
 
@@ -211,7 +208,7 @@ exports.resetPassword = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(400).json({ message: 'Invalid or expired token' });
+      return res.status(400).json({ message: 'Expired or invalid request' });
     }
 
     user.password = req.body.password;
@@ -221,7 +218,7 @@ exports.resetPassword = async (req, res) => {
 
     res.json({ success: true, message: 'Password reset successful' });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server not responding', error: error.message });
   }
 };
 
@@ -234,6 +231,6 @@ exports.getMe = async (req, res) => {
     const { password, ...userWithoutPassword } = user;
     res.json({ success: true, user: userWithoutPassword });
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server not responding' });
   }
 };

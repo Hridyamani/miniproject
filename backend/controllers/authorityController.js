@@ -38,8 +38,8 @@ exports.updateHomeGoing = async (req, res) => {
     if (record) {
       await Notification.create({
         user: record.student,
-        title: 'Home-going Request Status',
-        message: `Your home-going request for ${record.leaveDate.toLocaleDateString()} has been ${status}${remarks ? '. Remarks: ' + remarks : ''}.`,
+        title: 'Home Going Request Status',
+        message: `Your home going request for ${record.leaveDate.toLocaleDateString()} has been ${status}${remarks ? '. Remarks: ' + remarks : ''}.`,
         type: 'request'
       });
     }
@@ -61,8 +61,8 @@ exports.updateMessCut = async (req, res) => {
     if (record) {
       await Notification.create({
         user: record.student,
-        title: 'Mess-cut Request Status',
-        message: `Your mess-cut request from ${record.startDate.toLocaleDateString()} has been ${status}${remarks ? '. Remarks: ' + remarks : ''}.`,
+        title: 'Mess Cut Request Status',
+        message: `Your mess cut request from ${record.startDate.toLocaleDateString()} has been ${status}${remarks ? '. Remarks: ' + remarks : ''}.`,
         type: 'request'
       });
     }
@@ -187,10 +187,28 @@ exports.getStudents = async (req, res) => {
 // Get faculty
 exports.getFaculty = async (req, res) => {
   try {
-    const faculty = await User.find({ role: 'faculty' })
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const facultyList = await User.find({ role: 'faculty' })
       .select('name department phone email designation roomNumber userId dob bloodGroup collegeName')
       .sort({ name: 1 });
-    res.json({ success: true, faculty });
+
+    const attendanceRecords = await Attendance.find({
+      date: today,
+      student: { $in: facultyList.map(f => f._id) }
+    });
+
+    const results = facultyList.map(f => {
+      const att = attendanceRecords.find(a => a.student.toString() === f._id.toString());
+      return {
+        ...f._doc,
+        status: att ? att.status : null,
+        markedTime: att ? att.createdAt : null
+      };
+    });
+
+    res.json({ success: true, faculty: results });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -322,41 +340,65 @@ exports.getMessBillData = async (req, res) => {
 
     const attendance = await Attendance.find({
       date: { $gte: startDate, $lte: endDate }
-    }).select('student status milkTaken');
+    }).select('student status milkTaken date');
 
     const messCuts = await MessCut.find({
       status: 'approved',
       $or: [{ startDate: { $lte: endDate }, endDate: { $gte: startDate } }]
     }).select('student startDate endDate');
 
-    // Attendance data per inmate
-    const attendanceStats = {};
+    // Build per-person attendance stats AND a Set of present date strings for overlap checks
+    const attendanceStats = {}; // { studentId: { present, milk } }
+    const presentDatesMap = {}; // { studentId: Set<'YYYY-MM-DD'> }
+
     attendance.forEach(a => {
-      if (!attendanceStats[a.student]) {
-        attendanceStats[a.student] = { present: 0, milk: 0 };
-      }
+      const sid = a.student.toString();
+      if (!attendanceStats[sid]) attendanceStats[sid] = { present: 0, milk: 0 };
       if (a.status === 'present') {
-        attendanceStats[a.student].present++;
-        if (a.milkTaken) attendanceStats[a.student].milk++;
+        attendanceStats[sid].present++;
+        if (a.milkTaken) attendanceStats[sid].milk++;
+        // Record this exact date so mess cut overlap can be checked
+        if (!presentDatesMap[sid]) presentDatesMap[sid] = new Set();
+        presentDatesMap[sid].add(new Date(a.date).toISOString().split('T')[0]);
       }
     });
 
-    // Calculate mess cut days per inmate WITHIN THE SELECT MONTH
-    const messCutDays = {};
+    // Calculate effective mess cut days per inmate:
+    // ONLY deduct a mess cut day if the person was actually PRESENT on that day.
+    // If they were absent, they didn't eat from the mess — no deduction needed.
+    const effectiveMessCutDays = {}; // mess cut days that actually overlap with present days
+    const rawMessCutDays = {};       // total mess cut days in the month (for display only)
+
     messCuts.forEach(mc => {
-      let cutStart = new Date(Math.max(startDate, new Date(mc.startDate)));
-      let cutEnd = new Date(Math.min(endDate, new Date(mc.endDate)));
-      let days = Math.floor((cutEnd - cutStart) / (1000 * 60 * 60 * 24)) + 1;
-      if (days > 0) {
-        messCutDays[mc.student] = (messCutDays[mc.student] || 0) + days;
+      const sid = mc.student.toString();
+      const presentDates = presentDatesMap[sid] || new Set();
+
+      // Clip the mess cut range to the billing month
+      let cursor = new Date(Math.max(startDate.getTime(), new Date(mc.startDate).getTime()));
+      const cutEnd = new Date(Math.min(endDate.getTime(), new Date(mc.endDate).getTime()));
+      cursor.setHours(0, 0, 0, 0);
+      cutEnd.setHours(0, 0, 0, 0);
+
+      let rawDays = 0;
+      while (cursor <= cutEnd) {
+        rawDays++;
+        const dateStr = cursor.toISOString().split('T')[0];
+        if (presentDates.has(dateStr)) {
+          // Person was present on this mess cut day → deduct from billing
+          effectiveMessCutDays[sid] = (effectiveMessCutDays[sid] || 0) + 1;
+        }
+        cursor.setDate(cursor.getDate() + 1);
       }
+      rawMessCutDays[sid] = (rawMessCutDays[sid] || 0) + rawDays;
     });
 
     const data = inmates.map(s => {
-      const stats = attendanceStats[s._id.toString()] || { present: 0, milk: 0 };
-      let pDays = stats.present;
-      let mCuts = messCutDays[s._id] || 0;
-      let mDays = Math.max(0, pDays - mCuts);
+      const sid = s._id.toString();
+      const stats = attendanceStats[sid] || { present: 0, milk: 0 };
+      const pDays = stats.present;
+      const mCutsRaw = rawMessCutDays[sid] || 0;          // total mess cut days in month
+      const mCutsEffective = effectiveMessCutDays[sid] || 0; // only those on present days
+      const mDays = Math.max(0, pDays - mCutsEffective);   // billed mess days
       return {
         _id: s._id,
         name: s.name,
@@ -364,7 +406,8 @@ exports.getMessBillData = async (req, res) => {
         role: s.role,
         foodType: s.foodType || 'non-veg',
         presentDays: pDays,
-        messCuts: mCuts,
+        messCuts: mCutsRaw,           // displayed as total approved mess cut days
+        effectiveMessCuts: mCutsEffective, // how many were actually deducted
         messDays: mDays,
         milkTakenDays: stats.milk
       };

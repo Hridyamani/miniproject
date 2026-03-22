@@ -10,16 +10,22 @@
             </div>
 
             <div class="tab-nav">
-                <button [class.active]="activeTab === 'request'" (click)="activeTab = 'request'"> Home-going
+                <button [class.active]="activeTab === 'request'" (click)="activeTab = 'request'"> Home Going
                     Request</button>
-                <button [class.active]="activeTab === 'mark'" (click)="activeTab = 'mark'"> Mark Home-going</button>
+                <button [class.active]="activeTab === 'mark'" (click)="activeTab = 'mark'"> Mark Home Going</button>
+            </div>
+
+            <!-- Active record banner -->
+            <div *ngIf="hasActiveRecord" class="alert-banner warning">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                You have an active or pending home going record. Cancel it before submitting a new one.
             </div>
 
             <div class="content-grid">
                 <!-- Form Section -->
                 <div class="card">
                     <div *ngIf="activeTab === 'request'">
-                        <h3 class="card-title">New Home-going Request</h3>
+                        <h3 class="card-title">New Home Going Request</h3>
                         <p class="section-desc">Submit this for future home visits. Requires Authority approval.</p>
                         <div class="form-container">
                             <div class="form-group">
@@ -69,7 +75,7 @@
 
                             <button class="btn-primary btn-record" (click)="submitMarking()"
                                 [disabled]="!markDate || !markPlace || loading">
-                                {{ loading ? 'Recording...' : ' Mark Home-going Now' }}
+                                {{ loading ? 'Recording...' : ' Mark Home Going Now' }}
                             </button>
                         </div>
                     </div>
@@ -94,7 +100,7 @@
                                     Marking' }}</div>
                             </div>
                             <div class="item-actions" *ngIf="r.status === 'pending' || r.status === 'approved'">
-                                <button class="btn-cancel" (click)="cancelRequest(r._id)">Cancel Request</button>
+                                <button class="btn-cancel" (click)="openCancelDialog(r._id)">Cancel Request</button>
                             </div>
                             <span [class]="'badge badge-' + r.status">{{ r.status | titlecase }}</span>
                         </div>
@@ -103,5 +109,22 @@
             </div>
 
         </main>
+    </div>
+</div>
+
+<!-- Inline Cancel Reason Dialog (no browser prompt) -->
+<div *ngIf="cancelDialogId" class="modal-overlay">
+    <div class="cancel-dialog">
+        <h4><i class="bi bi-x-octagon-fill" style="color:#ef4444"></i> Cancel Home Going Request</h4>
+        <p>Please provide a reason for cancellation. This will be sent to the hostel authority.</p>
+        <textarea class="form-control mt-16" [(ngModel)]="cancelReason" rows="3"
+            placeholder="e.g. Plan changed, Emergency at home..."></textarea>
+        <div *ngIf="cancelMsg" class="msg-error mt-8">{{ cancelMsg }}</div>
+        <div class="dialog-actions mt-16">
+            <button class="secondary-btn" (click)="closeCancelDialog()" [disabled]="loading">Keep Request</button>
+            <button class="btn-danger" (click)="confirmCancel()" [disabled]="loading">
+                {{ loading ? 'Cancelling...' : 'Confirm Cancellation' }}
+            </button>
+        </div>
     </div>
 </div>

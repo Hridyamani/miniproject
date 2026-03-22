@@ -16,9 +16,18 @@
                             <span class="notif-title">{{ n.title }}</span>
                             <span class="notif-date">{{ n.createdAt | date:'dd MMM, hh:mm a' }}</span>
                         </div>
-                        <p class="notif-msg">{{ n.message }}</p>
-                        <div class="notif-tag" *ngIf="n.targetRole">{{ n.targetRole === 'all' ? 'Everyone' :
-                            n.targetRole | titlecase }}</div>
+                        <div class="notif-body">
+                            <p class="notif-msg">{{ n.message }}</p>
+                            <div *ngIf="n.pdfUrl" class="mt-8">
+                                <a [href]="'http://localhost:5000' + n.pdfUrl" target="_blank" class="pdf-link">
+                                    <i class="bi bi-file-earmark-pdf-fill"></i> View Attached Mess Bill (PDF)
+                                </a>
+                            </div>
+                        </div>
+                        <div class="notif-footer">
+                            <div class="notif-tag" *ngIf="n.targetRole">{{ n.targetRole === 'all' ? 'Everyone' :
+                                n.targetRole | titlecase }}</div>
+                        </div>
                     </div>
 
                     <div *ngIf="notifications.length === 0" class="empty-state">

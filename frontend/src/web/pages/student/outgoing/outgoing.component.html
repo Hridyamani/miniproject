@@ -10,6 +10,11 @@
             </div>
 
             <div class="content-grid">
+                <!-- Active outgoing warning -->
+                <div *ngIf="hasActiveOutgoing" class="alert-banner warning" style="grid-column: 1/-1; display:flex; align-items:center; gap:10px; padding:14px 20px; border-radius:14px; font-size:13px; font-weight:600; background:#fef3c7; color:#92400e; border:1.5px solid #fde68a; margin-bottom:0;">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    You already have an active outgoing. Mark your return before creating a new one.
+                </div>
                 <!-- Mark Form -->
                 <div class="card">
                     <h3 class="card-title">New Outgoing</h3>

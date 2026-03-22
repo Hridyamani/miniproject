@@ -26,13 +26,18 @@ export class HomeGoingComponent implements OnInit {
   markDate = new Date().toISOString().split('T')[0];
   markTime = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   markPlace = '';
-  
+
   minDate = '';
 
   loading = false;
   msg = '';
   msgType = '';
   records: any[] = [];
+
+  // Inline cancel dialog state (no browser prompt/alert)
+  cancelDialogId: string | null = null;
+  cancelReason = '';
+  cancelMsg = '';
 
   constructor(private http: HttpClient, private auth: AuthService) {
     const tom = new Date();
@@ -48,6 +53,10 @@ export class HomeGoingComponent implements OnInit {
     return { headers: new HttpHeaders({ Authorization: `Bearer ${this.auth.userValue?.token}` }) };
   }
 
+  get hasActiveRecord(): boolean {
+    return this.records.some(r => r.status === 'active' || r.status === 'pending');
+  }
+
   loadRecords() {
     this.http.get<any>('http://localhost:5000/api/student/home-going', this.headers).subscribe({
       next: res => this.records = res.homeGoings || [],
@@ -58,7 +67,12 @@ export class HomeGoingComponent implements OnInit {
   submitRequest() {
     if (!this.leaveDate || !this.place) return;
 
-    // Next day validation
+    if (this.hasActiveRecord) {
+      this.msg = 'You already have an active or pending home going record. Please cancel it before submitting a new one.';
+      this.msgType = 'error';
+      return;
+    }
+
     const selected = new Date(this.leaveDate);
     selected.setHours(0, 0, 0, 0);
     const tomorrow = new Date();
@@ -66,7 +80,7 @@ export class HomeGoingComponent implements OnInit {
     tomorrow.setHours(0, 0, 0, 0);
 
     if (selected < tomorrow) {
-      this.msg = 'Home-going request must be for tomorrow onwards.';
+      this.msg = 'Home going request must be for tomorrow onwards.';
       this.msgType = 'error';
       return;
     }
@@ -96,11 +110,17 @@ export class HomeGoingComponent implements OnInit {
   }
 
   submitMarking() {
-    // Current time is always used for marking
     this.markDate = new Date().toISOString().split('T')[0];
     this.markTime = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
     if (!this.markPlace) return;
+
+    if (this.hasActiveRecord) {
+      this.msg = 'You already have an active or pending home going record.';
+      this.msgType = 'error';
+      return;
+    }
+
     this.loading = true;
     this.msg = '';
 
@@ -110,7 +130,7 @@ export class HomeGoingComponent implements OnInit {
       place: this.markPlace
     }, this.headers).subscribe({
       next: (res: any) => {
-        this.msg = res.message || 'Home-going marked!';
+        this.msg = res.message || 'Home going marked!';
         this.msgType = 'success';
         this.loading = false;
         this.clearForms();
@@ -124,26 +144,40 @@ export class HomeGoingComponent implements OnInit {
     });
   }
 
-  cancelRequest(id: string) {
-    const reason = prompt('Please provide a strict reason for cancellation:');
-    if (!reason || reason.trim() === '') {
-      alert('Cancellation reason is required.');
+  // Instead of browser prompt(), open an inline cancel dialog
+  openCancelDialog(id: string) {
+    this.cancelDialogId = id;
+    this.cancelReason = '';
+    this.cancelMsg = '';
+  }
+
+  closeCancelDialog() {
+    this.cancelDialogId = null;
+    this.cancelReason = '';
+    this.cancelMsg = '';
+  }
+
+  confirmCancel() {
+    if (!this.cancelReason.trim()) {
+      this.cancelMsg = 'Please provide a reason for cancellation.';
       return;
     }
 
     this.loading = true;
     this.http.post('http://localhost:5000/api/student/home-going/cancel', {
-      requestId: id,
-      cancelReason: reason
+      requestId: this.cancelDialogId,
+      cancelReason: this.cancelReason
     }, this.headers).subscribe({
       next: (res: any) => {
-        alert(res.message);
         this.loading = false;
+        this.closeCancelDialog();
+        this.msg = res.message || 'Request cancelled.';
+        this.msgType = 'success';
         this.loadRecords();
       },
       error: err => {
-        alert(err.error?.message || 'Failed to cancel request.');
         this.loading = false;
+        this.cancelMsg = err.error?.message || 'Failed to cancel request.';
       }
     });
   }
@@ -157,5 +191,4 @@ export class HomeGoingComponent implements OnInit {
     this.markDate = new Date().toISOString().split('T')[0];
     this.markTime = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   }
-
 }

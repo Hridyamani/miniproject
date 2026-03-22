@@ -1,6 +1,6 @@
 <nav class="sidebar">
     <div class="sidebar-logo">
-        <div class="sidebar-logo-text">Stay<span>Sphere</span></div>
+        <div class="sidebar-logo-text">stay<span>Sphere</span></div>
         <div class="sidebar-logo-sub"> Hostel Management System </div>
     </div>
 
@@ -31,7 +31,7 @@
                 <i class="bi bi-calendar-check-fill"></i> Attendance
             </a>
 
-            <div class="nav-section-label">Forms</div>
+            <div class="nav-section-label">Markings</div>
             <a class="nav-item" routerLinkActive="active" [routerLink]="['/' + role + '/mess-cut']">
                 <i class="bi bi-cup-hot-fill"></i> Mess Cut
             </a>
@@ -53,17 +53,20 @@
 
         <!-- Admin -->
         <ng-container *ngIf="role === 'admin'">
+            <div class="nav-section-label">Manage</div>
             <a class="nav-item" routerLinkActive="active" [routerLink]="['/admin/users']">
                 <i class="bi bi-people-fill"></i> User Management
             </a>
+            <a class="nav-item" routerLinkActive="active" [routerLink]="['/admin/archive']">
+                <i class="bi bi-archive-fill"></i> Archived Users
+            </a>
+            
+            <div class="nav-section-label">Others</div>
             <a class="nav-item" routerLinkActive="active" [routerLink]="['/admin/notifications']">
                 <i class="bi bi-megaphone-fill"></i> Notifications
             </a>
             <a class="nav-item" routerLinkActive="active" [routerLink]="['/admin/security']">
                 <i class="bi bi-shield-lock-fill"></i> Security
-            </a>
-            <a class="nav-item" routerLinkActive="active" [routerLink]="['/admin/archive']">
-                <i class="bi bi-archive-fill"></i> Archived Students
             </a>
         </ng-container>
 
@@ -72,14 +75,12 @@
             <a class="nav-item" *ngIf="canAccessApprovals && !isFloorWingSecretary" routerLinkActive="active" [routerLink]="['/authority/requests']">
                 <i class="bi bi-check2-circle"></i> Approvals
             </a>
-            <a class="nav-item" *ngIf="!isFloorWingSecretary" routerLinkActive="active" [routerLink]="['/authority/notifications']">
-                <i class="bi bi-send-fill"></i> Announcements
-            </a>
+            
             
             <ng-container *ngIf="canAccessMessPages && !isFloorWingSecretary">
-                <div class="nav-section-label">Mess Management</div>
+                <div class="nav-section-label">Mess</div>
                 <a class="nav-item" routerLinkActive="active" [routerLink]="['/authority/mess-bill']">
-                    <i class="bi bi-receipt-cutoff"></i> Mess Bill
+                    <i class="bi bi-receipt-cutoff"></i> Mess Bill Calculation
                 </a>
             </ng-container>
 

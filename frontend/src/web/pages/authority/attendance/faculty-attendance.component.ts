@@ -36,11 +36,10 @@ export class FacultyAttendanceComponent implements OnInit {
     this.loading = true;
     this.http.get<any>('http://localhost:5000/api/authority/faculty', this.headers).subscribe({
       next: res => {
-        this.faculty = (res.faculty || []).map((f: any) => ({ ...f, status: 'present' }));
+        this.faculty = res.faculty || [];
         this.loading = false;
       },
       error: () => {
-        alert('Failed to load faculty');
         this.loading = false;
       }
     });
@@ -52,28 +51,12 @@ export class FacultyAttendanceComponent implements OnInit {
     const y = d.getFullYear();
     this.http.get<any>(`http://localhost:5000/api/authority/reports?month=${m}&year=${y}`, this.headers).subscribe({
       next: res => {
-        this.history = (res.attendance || []).filter((a: any) => a.student && (a.student.role === 'faculty' || a.role === 'faculty'));
-      }
-    });
-  }
-
-  submitAttendance() {
-    if (!confirm(`Mark attendance for ${this.faculty.length} faculty on ${this.selectedDate}?`)) return;
-    this.saving = true;
-    const body = {
-      date: this.selectedDate,
-      attendance: this.faculty.map(f => ({ student: f._id, status: f.status }))
-    };
-
-    this.http.post('http://localhost:5000/api/authority/attendance', body, this.headers).subscribe({
-      next: () => {
-        alert('Attendance submitted successfully');
-        this.saving = false;
-        this.loadHistory();
-      },
-      error: err => {
-        alert(err.error?.message || 'Failed to submit attendance');
-        this.saving = false;
+        // Filter attendance to show only faculty logic.
+        this.history = (res.attendance || []).filter((a: any) => 
+          (a.student && a.student.role === 'faculty') || 
+          (a.role === 'faculty') ||
+          (a.studentName && a.studentName.toLowerCase().includes('faculty')) // Fallback
+        );
       }
     });
   }

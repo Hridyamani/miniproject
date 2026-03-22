@@ -4,55 +4,72 @@
         <web-topbar [pageTitle]="'Home Going Records'" [userName]="user?.name || 'Faculty'"></web-topbar>
         <main class="page-content animate-fade-in">
 
-            <div class="card p-24 mb-24">
+            <div class="card premium-card animate-slide-up">
                 <div class="section-header">
-                    <h3>Record Home Going</h3>
-                    <i class="bi bi-houses section-icon purple-text"></i>
+                    <div class="title-group">
+                        <h3>Record Home Going</h3>
+                        <p class="subtitle">Log your departure details. Time is captured automatically.</p>
+                    </div>
+                    <i class="bi bi-房屋-fill stat-icon purple-text"></i>
                 </div>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Leave Date & Time (Current)</label>
-                        <input type="datetime-local" class="form-control" [(ngModel)]="homeGoingForm.leaveDate"
-                            readonly />
-                        <span class="hint">Automatically set to current time.</span>
+
+                <div class="form-row mt-16">
+                    <div class="form-group flex-1">
+                        <label class="form-label font-600">Leave Date & Time</label>
+                        <div class="readonly-input">
+                            <i class="bi bi-clock-history mr-8"></i>
+                            {{ homeGoingForm.leaveDate | date:'dd MMM yyyy, hh:mm a' }}
+                        </div>
+                        <p class="hint mt-4">Current system time at departure.</p>
                     </div>
                     
-                    <div class="form-group">
-                        <label>Destination</label>
-                        <input type="text" class="form-control" placeholder="Enter Place"
+                    <div class="form-group flex-1">
+                        <label class="form-label font-600">Destination / Place</label>
+                        <input type="text" class="form-control modern-input" placeholder="e.g., Home, Ernakulam"
                             [(ngModel)]="homeGoingForm.place" />
                     </div>
                 </div>
 
-                <button class="primary-btn mt-16" (click)="submitHomeGoing()">
-                    Mark Home Going <i class="bi bi-geo-alt-fill ml-8"></i>
-                </button>
+                <div class="actions mt-24">
+                    <button class="primary-btn w-100" (click)="submitHomeGoing()">
+                        Register Departure <i class="bi bi-geo-alt-fill ml-8"></i>
+                    </button>
+                </div>
             </div>
 
-            <div class="card p-24">
+            <div class="card premium-card mt-32 animate-slide-up" style="animation-delay: 0.1s;">
                 <div class="section-header">
-                    <h3>Home Going History</h3>
-                    <i class="bi bi-clock-history section-icon purple-text"></i>
+                    <div class="title-group">
+                        <h3>Departure History</h3>
+                        <p class="subtitle">Latest home going records for your reference</p>
+                    </div>
+                    <i class="bi bi-journal-text stat-icon text-muted"></i>
                 </div>
-                <div class="table-responsive">
-                    <table class="history-table">
+
+                <div class="history-container">
+                    <table class="modern-table">
                         <thead>
                             <tr>
-                                <th>Leave Date</th>
+                                <th>Date & Time</th>
                                 <th>Destination</th>
-                                <th>Status</th>
+                                <th style="text-align: right">Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr *ngFor="let item of homeGoingHistory">
-                                <td>{{ item.leaveDate | date:'dd MMM yyyy' }}</td>
-                                <td>{{ item.place }}</td>
                                 <td>
-                                    <span class="status-badge marked">Recorded</span>
+                                    <div class="dateTime">
+                                        <strong>{{ item.leaveDate | date:'dd MMM yyyy' }}</strong>
+                                        <small class="text-muted block ml-8">{{ item.leaveDate | date:'hh:mm a' }}</small>
+                                    </div>
+                                </td>
+                                <td>{{ item.place }}</td>
+                                <td style="text-align: right">
+                                    <span class="status-pill present">Recorded</span>
                                 </td>
                             </tr>
                             <tr *ngIf="homeGoingHistory.length === 0">
-                                <td colspan="3" class="empty-td text-center">No history found</td>
+                                <td colspan="3" class="empty-state">No home going records available.</td>
                             </tr>
                         </tbody>
                     </table>

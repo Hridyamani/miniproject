@@ -19,16 +19,11 @@ export class FacultyAttendanceComponent implements OnInit {
   attendanceHistory: any[] = [];
   hasMarkedToday = false;
 
-  students: any[] = [];
-  selectedDate = new Date().toISOString().split('T')[0];
-  markingStudents = false;
-
   constructor(private http: HttpClient, private auth: AuthService) { }
 
   ngOnInit() {
     this.user = this.auth.userValue;
     this.loadAttendance();
-    this.loadStudents();
   }
 
   get headers() {
@@ -46,40 +41,13 @@ export class FacultyAttendanceComponent implements OnInit {
       }
     });
   }
+
   markAttendance(status: string) {
     this.http.post('http://localhost:5000/api/faculty/attendance', { status }, this.headers).subscribe({
       next: () => {
-        alert(`Attendance marked as ${status}`);
         this.loadAttendance();
       },
       error: (err) => alert((err as any).error?.message || 'Failed to mark attendance')
-    });
-  }
-
-  loadStudents() {
-    this.http.get<any>('http://localhost:5000/api/faculty/students', this.headers).subscribe({
-      next: res => {
-        this.students = (res.students || []).map((s: any) => ({ ...s, status: 'present' }));
-      }
-    });
-  }
-
-  submitStudentAttendance() {
-    this.markingStudents = true;
-    const body = {
-      date: this.selectedDate,
-      attendance: this.students.map(s => ({ student: s._id, status: s.status }))
-    };
-
-    this.http.post('http://localhost:5000/api/faculty/student-attendance', body, this.headers).subscribe({
-      next: () => {
-        alert('Student attendance submitted successfully');
-        this.markingStudents = false;
-      },
-      error: err => {
-        alert(err.error?.message || 'Failed to submit attendance');
-        this.markingStudents = false;
-      }
     });
   }
 }

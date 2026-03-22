@@ -11,7 +11,7 @@ exports.getProfile = async (req, res) => {
     const user = await User.findById(req.user._id).select('-password');
     if (!user) return res.status(404).json({ success: false, message: 'Profile not found' });
 
-    // Check and apply nextFoodType if effective date has arrived
+    // Check and apply nextFoodType 
     const now = new Date();
     if (user.nextFoodTypeEffectiveDate && now >= user.nextFoodTypeEffectiveDate) {
       user.foodType = user.nextFoodType;
@@ -130,66 +130,6 @@ exports.markSelfAttendance = async (req, res) => {
   }
 };
 
-// --- Student Attendance Marking for Faculty ---
-exports.getStudentsForAttendance = async (req, res) => {
-  try {
-    const students = await User.find({ role: 'student', isActive: true })
-      .select('name roomNumber userId department')
-      .sort({ roomNumber: 1 });
-    res.json({ success: true, students });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-exports.markStudentAttendance = async (req, res) => {
-  try {
-    const { attendance, date } = req.body; // Expects array of { student, status }
-    const markingDate = date ? new Date(date) : new Date();
-    markingDate.setHours(0, 0, 0, 0);
-
-    // Check if hostel is closed on this date
-    const iCl = await HostelClosing.findOne({
-      startDate: { $lte: markingDate },
-      endDate: { $gte: markingDate }
-    });
-
-    if (iCl) {
-      return res.status(400).json({ success: false, message: `Hostel is closed on this date.` });
-    }
-
-    const results = [];
-    for (const item of attendance) {
-      const { student: studentId, status } = item;
-      const student = await User.findById(studentId);
-      if (!student) continue;
-
-      let record = await Attendance.findOne({ student: studentId, date: markingDate });
-
-      if (record) {
-        record.status = status;
-        record.markedBy = req.user._id;
-        record.role = req.user.role;
-      } else {
-        record = new Attendance({
-          student: studentId,
-          studentName: student.name,
-          admissionNo: student.admissionNo,
-          roomNumber: student.roomNumber,
-          date: markingDate,
-          status,
-          markedBy: req.user._id,
-          role: req.user.role
-        });
-      }
-      await record.save();
-      results.push(record);
-    }
-    res.json({ success: true, message: 'Attendance processed', count: results.length });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
 
 exports.getSelfAttendanceHistory = async (req, res) => {
   try {

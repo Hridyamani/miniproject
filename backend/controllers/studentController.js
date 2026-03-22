@@ -159,7 +159,7 @@ exports.markOutgoing = async (req, res) => {
   }
 };
 
-// Request home going 
+// Request Home Going
 exports.requestHomeGoing = async (req, res) => {
   try {
     const { leaveDate, time, place, reason } = req.body;
@@ -168,12 +168,12 @@ exports.requestHomeGoing = async (req, res) => {
     today.setHours(0, 0, 0, 0);
     const selectedDate = new Date(leaveDate);
     if (selectedDate <= today) {
-      return res.status(400).json({ message: 'Home-going request can only be from tomorrow onwards.' });
+      return res.status(400).json({ message: 'Home going request can only be from tomorrow onwards.' });
     }
 
     const existingHG = await HomeGoing.findOne({ student: req.user._id, status: { $in: ['active', 'pending'] } });
     if (existingHG) {
-      return res.status(400).json({ message: 'You already have an active or pending home-going record!' });
+      return res.status(400).json({ message: 'You already have an active or pending home going record!' });
     }
 
     const homeGoing = new HomeGoing({
@@ -189,20 +189,20 @@ exports.requestHomeGoing = async (req, res) => {
     });
 
     await homeGoing.save();
-    res.json({ success: true, message: 'Home-going request submitted', homeGoing });
+    res.json({ success: true, message: 'Home going request submitted', homeGoing });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Mark home going 
+// Mark Home Going
 exports.markHomeGoing = async (req, res) => {
   try {
     const { leaveDate, time, place } = req.body;
 
     const existingHG = await HomeGoing.findOne({ student: req.user._id, status: { $in: ['active', 'pending'] } });
     if (existingHG) {
-      return res.status(400).json({ message: 'You already have an active or pending home-going record!' });
+      return res.status(400).json({ message: 'You already have an active or pending home going record!' });
     }
 
     // Open hours check
@@ -221,7 +221,7 @@ exports.markHomeGoing = async (req, res) => {
 
       if (currentTotal < openTotal || currentTotal >= closeTotal) {
         return res.status(400).json({
-          message: `Hostel is currently closed (${closeTime} to ${openTime}). Home-going can only be marked during open hours.`
+          message: `Hostel is currently closed (${closeTime} to ${openTime}). Home going can only be marked during open hours.`
         });
       }
     }
@@ -238,13 +238,13 @@ exports.markHomeGoing = async (req, res) => {
     });
 
     await homeGoing.save();
-    res.json({ success: true, message: 'Home-going marked successfully', homeGoing });
+    res.json({ success: true, message: 'Home going marked successfully', homeGoing });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Cancel Home-Going
+// Cancel Home Going
 exports.cancelHomeGoing = async (req, res) => {
   try {
     const { requestId, cancelReason } = req.body;
@@ -268,14 +268,14 @@ exports.cancelHomeGoing = async (req, res) => {
     for (const auth of authorities) {
       await Notification.create({
         user: auth._id,
-        title: 'Home-Going Cancelled',
-        message: `${req.user.name} cancelled their home-going request. Reason: ${cancelReason}`,
+        title: 'Home Going Cancelled',
+        message: `${req.user.name} cancelled their home going request. Reason: ${cancelReason}`,
         type: 'request',
         targetRole: 'authority'
       });
     }
 
-    res.json({ success: true, message: 'Home-going request cancelled successfully', homeGoing });
+    res.json({ success: true, message: 'Home going request cancelled successfully', homeGoing });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

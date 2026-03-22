@@ -58,15 +58,6 @@ exports.updateMessCut = async (req, res) => {
       status, remarks, approvedBy: req.user._id, approvedAt: new Date()
     }, { new: true });
 
-    if (record) {
-      await Notification.create({
-        user: record.student,
-        title: 'Mess Cut Request Status',
-        message: `Your mess cut request from ${record.startDate.toLocaleDateString()} has been ${status}${remarks ? '. Remarks: ' + remarks : ''}.`,
-        type: 'request'
-      });
-    }
-
     res.json({ success: true, record });
   } catch (error) {
     res.status(500).json({ message: error.message });

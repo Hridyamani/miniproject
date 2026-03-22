@@ -60,6 +60,13 @@ exports.getDashboardStats = async (req, res) => {
 
     const totalPending = pendingMessCuts + pendingHomeGoings;
 
+    const activeUsersCount = await User.countDocuments();
+    
+    const todayApprovedHomeGoings = await HomeGoing.countDocuments({
+      status: 'approved',
+      approvedAt: { $gte: startOfToday, $lt: endOfToday }
+    });
+
     // Weekly Activity
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -76,9 +83,10 @@ exports.getDashboardStats = async (req, res) => {
     res.json({
       success: true,
       stats: {
-        today: { todayOutgoings, todayHomeGoings, todayReturns, activeMessCuts },
+        today: { todayOutgoings, todayHomeGoings, todayReturns, activeMessCuts, todayApprovedHomeGoings },
         pending: { pendingMessCuts, pendingHomeGoings, totalPending, weeklyPending },
-        weekly: { weeklyOutgoings, weeklyHomeGoings }
+        weekly: { weeklyOutgoings, weeklyHomeGoings },
+        totalUsers: activeUsersCount
       }
     });
   } catch (error) {

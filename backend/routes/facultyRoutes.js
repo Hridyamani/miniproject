@@ -14,9 +14,6 @@ router.put('/food-preference', ctrl.updateFoodPreference);
 router.post('/attendance', ctrl.markSelfAttendance);
 router.get('/attendance', ctrl.getSelfAttendanceHistory);
 
-// Student Attendance
-router.get('/students', ctrl.getStudentsForAttendance);
-router.post('/student-attendance', ctrl.markStudentAttendance);
 
 router.post('/mess-cut', ctrl.requestMessCut);
 router.get('/mess-cut', ctrl.getSelfMessCuts);

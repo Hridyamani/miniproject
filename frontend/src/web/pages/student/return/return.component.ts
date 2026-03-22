@@ -54,7 +54,7 @@ export class ReturnComponent implements OnInit {
           this.msgType = 'error';
           this.locating = false;
         },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
       );
     } else {
       this.msg = 'Geolocation not supported.';

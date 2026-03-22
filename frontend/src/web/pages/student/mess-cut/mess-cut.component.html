@@ -1,23 +1,23 @@
 <div class="dashboard-layout">
     <web-sidebar [role]="'student'"></web-sidebar>
     <div class="main-content">
-        <web-topbar [pageTitle]="'Mess Cut Requests'"></web-topbar>
+        <web-topbar [pageTitle]="'Mess Cut Apply'"></web-topbar>
         <main class="page-content">
 
             <div class="page-header">
-                <h1>Mess Cut Request</h1>
+                <h1>Mess Cut Apply</h1>
                 <p>Request suspension of mess facilities for a specific period.</p>
             </div>
 
             <div class="content-grid">
                 <div class="card">
-                    <h3 class="card-title">New Request</h3>
+                    <h3 class="card-title">New Application</h3>
                     <div class="form-container">
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Start Date *</label>
                                 <input type="date" class="form-control" [(ngModel)]="startDate" [min]="minDate" />
-                                <span class="hint">Starting from tomorrow only</span>
+                                <span class="hint">Starting date should be from tomorrow only</span>
                             </div>
                             <div class="form-group">
                                 <label>End Date *</label>
@@ -32,18 +32,17 @@
 
                         <button class="btn-primary" (click)="submitRequest()"
                             [disabled]="!startDate || !endDate || loading">
-                            {{ loading ? 'Submitting...' : 'Submit Request →' }}
+                            {{ loading ? 'Submitting...' : 'Submit Application →' }}
                         </button>
                     </div>
                     <div class="policy-note">
-                        <p><strong>Policy:</strong> Mess cut must be applied for at least the minimum allowed days (as
-                            set by hostel admin). All requests go to Authority for approval.</p>
+                        <p><strong>Policy :</strong> Mess cut must be applied for at least the minimum allowed days </p>
                     </div>
                 </div>
 
                 <div class="card">
                     <h3 class="card-title">Mess Cut History</h3>
-                    <div *ngIf="records.length === 0" class="empty-state">No requests found.</div>
+                    <div *ngIf="records.length === 0" class="empty-state">No Applications found.</div>
                     <div class="history-list">
                         <div *ngFor="let r of records" class="history-item">
                             <div class="item-main">

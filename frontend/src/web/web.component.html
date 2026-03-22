@@ -4,11 +4,10 @@
 
 <ng-template #locationBlocked>
   <div class="location-access-screen">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <i class="bi bi-geo-alt-fill"></i>
+    <div class="emoji-icon">📍</div>
     <h1>Location Access Required</h1>
-    <p>To ensure security and proper check-in/out tracking, StaySphere requires access to your location. 
-       Please allow location permissions to access the platform.</p>
+    <p>StaySphere needs access to your location for security and check-in tracking.
+       Please allow location permission to access the platform.</p>
     <button class="btn-retry" (click)="requestLocation()">
       Enable Access
     </button>

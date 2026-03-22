@@ -144,7 +144,7 @@ h1, h2, h3, h4, h5 {
 }
 
 .btn-danger, .btn-reject, .btn-absent {
-    background: #f5f3ff; /* Very Light Purple */
+    background: #f5f3ff; 
     color: #7c3aed;
     border: 1.5px solid #ddd6fe;
     padding: 10px 24px;
@@ -255,9 +255,7 @@ input:focus, textarea:focus, .form-control:focus {
 .ml-8 { margin-left: 8px; }
 .mr-8 { margin-right: 8px; }
 
-/* ═══════════════════════════════════════════════════
-   INLINE TOAST / STATUS MESSAGES (no browser alerts)
-═══════════════════════════════════════════════════ */
+/* STATUS MESSAGES */
 .msg-success, .toast-success {
   color: #065f46;
   background: #d1fae5;
@@ -297,9 +295,8 @@ input:focus, textarea:focus, .form-control:focus {
   margin-top: 12px;
 }
 
-/* ═══════════════════════════════════════════════
-   PREMIUM CARD (used across all modules)
-═══════════════════════════════════════════════ */
+/* 
+   PREMIUM CARD */
 .premium-card {
   background: var(--card-bg);
   border-radius: 20px;
@@ -335,9 +332,8 @@ input:focus, textarea:focus, .form-control:focus {
   padding: 0 24px 24px;
 }
 
-/* ═══════════════════════════════════════════════
-   MODERN TABLE (used in all list pages)
-═══════════════════════════════════════════════ */
+/* 
+   MODERN TABLE  */
 .modern-table {
   width: 100%;
   border-collapse: collapse;
@@ -370,9 +366,7 @@ input:focus, textarea:focus, .form-control:focus {
   background: #fafbff;
 }
 
-/* ═══════════════════════════════════════════════
-   STATUS PILLS (shared across modules)
-═══════════════════════════════════════════════ */
+/* STATUS PILLS*/
 .status-pill {
   padding: 5px 14px;
   border-radius: 999px;
@@ -407,16 +401,13 @@ input:focus, textarea:focus, .form-control:focus {
   color: #1d4ed8;
 }
 
-/* ═══════════════════════════════════════════════
-   STAT / ICON HELPERS
-═══════════════════════════════════════════════ */
+/* ICON HELPERS */
 .purple-text { color: var(--primary); }
 .orange-text { color: #f59e0b; }
 .stat-icon { font-size: 32px; opacity: 0.25; }
 
-/* ═══════════════════════════════════════════════
-   EXTRA ANIMATIONS
-═══════════════════════════════════════════════ */
+/* 
+   EXTRA ANIMATIONS */
 .animate-slide-up {
   animation: slideUp 0.4s ease-out both;
 }
@@ -426,9 +417,7 @@ input:focus, textarea:focus, .form-control:focus {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ═══════════════════════════════════════════════
-   FORM HELPERS
-═══════════════════════════════════════════════ */
+/* helpers */
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;

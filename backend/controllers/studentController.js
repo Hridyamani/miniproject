@@ -41,7 +41,9 @@ exports.getProfile = async (req, res) => {
       await user.save();
     }
 
-    const settings = await HostelSettings.findOne({ hostelName: user.hostelName });
+    const settings = await HostelSettings.findOne({ 
+      hostelName: { $regex: new RegExp(`^${user.hostelName}$`, 'i') } 
+    });
     res.json({ success: true, user, foodPreferenceWindow: settings?.foodPreferenceWindow || null });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -78,7 +80,9 @@ exports.updateFoodPreference = async (req, res) => {
       return res.status(400).json({ message: 'Invalid food type' });
     }
 
-    const settings = await HostelSettings.findOne({ hostelName: req.user.hostelName });
+    const settings = await HostelSettings.findOne({ 
+      hostelName: { $regex: new RegExp(`^${req.user.hostelName}$`, 'i') } 
+    });
     if (!settings || !settings.foodPreferenceWindow || !settings.foodPreferenceWindow.startDate || !settings.foodPreferenceWindow.endDate) {
       return res.status(403).json({ message: 'Food preference change window is currently closed.' });
     }
@@ -119,7 +123,9 @@ exports.markOutgoing = async (req, res) => {
     }
 
     // Open hours check
-    const settings = await HostelSettings.findOne({ hostelName: req.user.hostelName });
+    const settings = await HostelSettings.findOne({ 
+      hostelName: { $regex: new RegExp(`^${req.user.hostelName}$`, 'i') } 
+    });
     if (settings) {
       const { openTime, closeTime } = settings;
       const now = new Date();
@@ -206,7 +212,9 @@ exports.markHomeGoing = async (req, res) => {
     }
 
     // Open hours check
-    const settings = await HostelSettings.findOne({ hostelName: req.user.hostelName });
+    const settings = await HostelSettings.findOne({ 
+      hostelName: { $regex: new RegExp(`^${req.user.hostelName}$`, 'i') } 
+    });
     if (settings) {
       const { openTime, closeTime } = settings;
       const now = new Date();
@@ -382,7 +390,9 @@ exports.requestMessCut = async (req, res) => {
     }
 
     // Validation: Minimum days check from HostelSettings
-    const settings = await HostelSettings.findOne({ hostelName: req.user.hostelName });
+    const settings = await HostelSettings.findOne({ 
+      hostelName: { $regex: new RegExp(`^${req.user.hostelName}$`, 'i') } 
+    });
     const minDays = settings?.minMessCutDays || 3;
 
     const diffTime = Math.abs(new Date(endDate) - new Date(startDate));
@@ -491,7 +501,9 @@ exports.getNotifications = async (req, res) => {
     }).sort({ createdAt: -1 });
 
     // Inject dynamic notification for food window if open
-    const settings = await HostelSettings.findOne({ hostelName: req.user.hostelName });
+    const settings = await HostelSettings.findOne({ 
+      hostelName: { $regex: new RegExp(`^${req.user.hostelName}$`, 'i') } 
+    });
     if (settings && settings.foodPreferenceWindow && settings.foodPreferenceWindow.startDate && settings.foodPreferenceWindow.endDate) {
       const now = new Date();
       const start = new Date(settings.foodPreferenceWindow.startDate);

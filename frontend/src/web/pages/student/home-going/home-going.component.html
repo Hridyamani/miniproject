@@ -18,7 +18,7 @@
             <!-- Active record banner -->
             <div *ngIf="hasActiveRecord" class="alert-banner warning">
                 <i class="bi bi-exclamation-triangle-fill"></i>
-                You have an active or pending home going record. Cancel it before submitting a new one.
+                You have an active or pending home going record. Mark return before submitting a new one.
             </div>
 
             <div class="content-grid">
@@ -26,10 +26,10 @@
                 <div class="card">
                     <div *ngIf="activeTab === 'request'">
                         <h3 class="card-title">New Home Going Request</h3>
-                        <p class="section-desc">Submit this for future home visits. Requires Authority approval.</p>
+                        <p class="section-desc">Submit this during hostel closed hours. Requires Authority approval.</p>
                         <div class="form-container">
                             <div class="form-group">
-                                <label>Proposed Leave Date * (Tomorrow onwards)</label>
+                                <label>Proposed Leave Date * </label>
                                 <input type="date" class="form-control" [(ngModel)]="leaveDate" [min]="minDate" />
                             </div>
                             <div class="form-row">
@@ -38,7 +38,7 @@
                                     <input type="time" class="form-control" [(ngModel)]="time" />
                                 </div>
                                 <div class="form-group">
-                                    <label>Place / Hometown *</label>
+                                    <label>Place  *</label>
                                     <input class="form-control" [(ngModel)]="place" placeholder="e.g. Kochi" />
                                 </div>
                             </div>
@@ -56,19 +56,19 @@
 
                     <div *ngIf="activeTab === 'mark'">
                         <h3 class="card-title">Record Departure</h3>
-                        <p class="section-desc">Use this when you are actually leaving the hostel today.</p>
+                        <p class="section-desc">Mark this when leaving to home.</p>
                         <div class="form-container">
                             <div class="form-group">
-                                <label>Departure Date (Auto-generated)</label>
+                                <label>Departure Date </label>
                                 <input type="date" class="form-control" [(ngModel)]="markDate" readonly />
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>Departure Time (Auto-generated)</label>
+                                    <label>Departure Time </label>
                                     <input type="time" class="form-control" [(ngModel)]="markTime" readonly />
                                 </div>
                                 <div class="form-group">
-                                    <label>Place / Hometown</label>
+                                    <label> Hometown</label>
                                     <input class="form-control" [(ngModel)]="markPlace" placeholder="e.g. Kochi" />
                                 </div>
                             </div>

@@ -16,24 +16,24 @@
                     <div class="stat-icon"><i class="bi bi-house-door"></i></div>
                     <div class="stat-details">
                         <span class="stat-value">{{ summary.pendingHomeGoings }}</span>
-                        <span class="stat-label">Pending Home Leaves</span>
+                        <span class="stat-label">Pending Home Going Requests </span>
                     </div>
                 </div>
                 <div class="stat-card blue">
                     <div class="stat-icon"><i class="bi bi-person-walking"></i></div>
                     <div class="stat-details">
                         <span class="stat-value">{{ summary.todayOutgoings }}</span>
-                        <span class="stat-label">Today's Outgoings</span>
+                        <span class="stat-label"> Today's Outgoings</span>
                     </div>
                 </div>
             </div>
 
             <div class="dashboard-grid">
-                <!-- Attendance Marking (Students) -->
+                <!-- Attendance StudentMarking  -->
                 <div class="card attendance-card mb-24">
                     <div class="card-header">
                         <div class="title-group">
-                            <h3>Daily Attendance (Students)</h3>
+                            <h3>Daily Student Attendance </h3>
                             <p class="subtitle">Mark students present or absent for today</p>
                         </div>
                         <div class="header-actions">
@@ -97,47 +97,7 @@
                     </div>
                 </div>
 
-                <!-- Faculty Attendance (View Only) -->
-                <div class="card attendance-card">
-                    <div class="card-header">
-                        <div class="title-group">
-                            <h3>Faculty Attendance</h3>
-                            <p class="subtitle">Recently marked faculty presence for today</p>
-                        </div>
-                    </div>
 
-                    <div class="table-container">
-                        <table class="modern-table">
-                            <thead>
-                                <tr>
-                                    <th>Faculty Details</th>
-                                    <th>Department</th>
-                                    <th style="text-align: right">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr *ngFor="let f of facultyAttendance">
-                                    <td>
-                                        <div class="student-cell">
-                                            <div class="avatar blue">{{ (f.student?.name || 'F')[0] }}</div>
-                                            <div class="name-info">
-                                                <span class="name">{{ f.student?.name || f.studentName }}</span>
-                                                <span class="id">{{ f.student?.userId }}</span>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="dept-cell"><div class="dept-tag">{{ f.student?.department || 'N/A' }}</div></td>
-                                    <td style="text-align: right">
-                                        <span class="status-badge" [class]="f.status">{{ f.status | titlecase }}</span>
-                                    </td>
-                                </tr>
-                                <tr *ngIf="facultyAttendance.length === 0">
-                                    <td colspan="4" class="empty-state">No faculty attendance recorded today.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
             </div>
 
             <section class="notifications-section mt mb-4">

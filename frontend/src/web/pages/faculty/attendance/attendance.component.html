@@ -19,17 +19,17 @@
                             <i class="bi" [class.bi-check-lg]="hasMarkedToday" [class.bi-clock]="!hasMarkedToday"></i>
                         </div>
                         <div class="indicator-text">
-                            <span class="main">{{ hasMarkedToday ? 'Attendance Recorded' : 'Ready to Mark' }}</span>
+                            <span class="main">{{ hasMarkedToday ? 'Attendance Recorded' : ' Mark Attendance' }}</span>
                             <span class="sub text-muted">{{ hasMarkedToday ? 'Your presence has been logged in the system.' : 'Please select your status for today.' }}</span>
                         </div>
                     </div>
                     
                     <div class="marking-actions">
                         <button class="btn-present" [disabled]="hasMarkedToday" (click)="markAttendance('present')">
-                            <i class="bi bi-check2"></i> Mark Present
+                            <i class="bi bi-check2"></i> Present
                         </button>
                         <button class="btn-absent" [disabled]="hasMarkedToday" (click)="markAttendance('absent')">
-                            <i class="bi bi-x-lg"></i> Mark Absent / Leave
+                            <i class="bi bi-x-lg"></i>  Absent
                         </button>
                     </div>
                 </div>

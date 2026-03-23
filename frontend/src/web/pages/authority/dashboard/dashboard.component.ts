@@ -24,7 +24,6 @@ export class AuthorityDashboardComponent implements OnInit {
   };
 
   students: any[] = [];
-  facultyAttendance: any[] = [];
   filteredAttendanceStudents: any[] = [];
   attendanceSearch = '';
   notifications: any[] = [];
@@ -45,7 +44,6 @@ export class AuthorityDashboardComponent implements OnInit {
   loadAttendanceForDate() {
     this.markedStudents = {};
     this.markedMilk = {};
-    this.facultyAttendance = [];
 
     const dateObj = new Date(this.selectedDate);
     const year = dateObj.getFullYear();
@@ -57,9 +55,7 @@ export class AuthorityDashboardComponent implements OnInit {
         const compareStr = this.selectedDate;
         history.forEach((a: any) => {
           if (new Date(a.date).toISOString().split('T')[0] === compareStr) {
-            if (a.role === 'faculty') {
-              this.facultyAttendance.push(a);
-            } else {
+            if (a.role !== 'faculty') {
               const sid = a.student?._id || a.student;
               this.markedStudents[sid] = a.status;
               this.markedMilk[sid] = !!a.milkTaken;

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
@@ -29,7 +29,7 @@ export class SecuritySettingsComponent implements OnInit {
   msg = '';
   msgType = '';
 
-  constructor(private http: HttpClient, private auth: AuthService) {
+  constructor(private http: HttpClient, private auth: AuthService, private cdr: ChangeDetectorRef) {
     this.email = this.auth.userValue?.email || '';
   }
 
@@ -56,6 +56,7 @@ export class SecuritySettingsComponent implements OnInit {
             this.foodPreferenceEndDate = res.settings.foodPreferenceWindow.endDate ? res.settings.foodPreferenceWindow.endDate.split('T')[0] : '';
             this.foodPreferenceDurationMonths = res.settings.foodPreferenceWindow.durationMonths || 3;
           }
+          this.cdr.detectChanges();
         }
       },
       error: () => { }

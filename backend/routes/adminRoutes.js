@@ -5,6 +5,8 @@ const { protect, authorize } = require('../middleware/authMiddleware');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 
+router.get('/students/download-template', ctrl.downloadStudentTemplate);
+
 router.use(protect);
 router.use(authorize('admin'));
 
@@ -13,7 +15,6 @@ router.get('/users', ctrl.getAllUsers);
 router.post('/users/create', ctrl.createUser);
 router.put('/users/:id', ctrl.updateUser);
 router.delete('/users/:id', ctrl.deleteUser);
-router.get('/students/download-template', ctrl.downloadStudentTemplate);
 router.post('/students/preview-upload', upload.single('file'), ctrl.previewBulkStudents);
 router.post('/students/confirm-upload', ctrl.confirmBulkUpload);
 router.get('/return-tracking', ctrl.getReturnTracking);

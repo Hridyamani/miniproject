@@ -173,11 +173,11 @@
             <!-- SECTION E: Calculation Results -->
             <div *ngIf="stage === 5" class="card premium-card">
                 <div class="card-header border-bottom">
-                    <h3>Section E: Final Bill List (Billed Monthly)</h3>
+                    <h3>Section E: Final Bill List</h3>
                 </div>
                 <div class="table-responsive">
                     <table class="modern-table">
-                        <thead><tr><th>Name</th><th>Role</th><th>Mess Days</th><th>Milk Days</th><th>Mess Bill (₹)</th><th>Milk Bill (₹)</th><th>Total (₹)</th></tr></thead>
+                        <thead><tr><th>Name</th><th>Role</th><th>Mess Days</th><th>Milk Days</th><th>Mess taken Bill (₹)</th><th> Milk Bill (₹)</th><th>Total bill (₹)</th></tr></thead>
                         <tbody>
                             <tr *ngFor="let s of finalReport">
                                 <td>{{s.name}}</td><td>{{s.role | titlecase}}</td>

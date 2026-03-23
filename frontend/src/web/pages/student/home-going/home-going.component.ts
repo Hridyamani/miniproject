@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
@@ -13,7 +13,7 @@ import { AuthService } from '../../../services/auth.service';
   templateUrl: './home-going.component.html',
   styleUrls: ['./home-going.component.css']
 })
-export class HomeGoingComponent implements OnInit {
+export class HomeGoingComponent implements OnInit, OnDestroy {
   activeTab = 'request';
 
   // Request Form
@@ -39,6 +39,8 @@ export class HomeGoingComponent implements OnInit {
   cancelReason = '';
   cancelMsg = '';
 
+  timer: any;
+
   constructor(private http: HttpClient, private auth: AuthService) {
     const tom = new Date();
     tom.setDate(tom.getDate() + 1);
@@ -47,6 +49,14 @@ export class HomeGoingComponent implements OnInit {
 
   ngOnInit() {
     this.loadRecords();
+    this.timer = setInterval(() => {
+      this.markDate = new Date().toISOString().split('T')[0];
+      this.markTime = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    }, 1000);
+  }
+
+  ngOnDestroy() {
+    if (this.timer) clearInterval(this.timer);
   }
 
   get headers() {

@@ -375,9 +375,12 @@
                                 <i class="bi bi-file-earmark-excel purple-text big-icon"></i>
                                 <h4>Import Student Data</h4>
                                 <p>Please fill the downloaded Excel template and upload it here.</p>
+                                <button class="btn-outline mt-16" (click)="downloadTemplate()" style="margin-top: 16px;">
+                                    <i class="bi bi-download"></i> Download Excel Template
+                                </button>
                             </div>
                             
-                            <div class="upload-actions">
+                            <div class="upload-actions" style="margin-top: 16px;">
                                 <button class="btn-primary-fancy upload-main" (click)="fileInput.click()" [disabled]="uploading">
                                     <i class="bi bi-cloud-arrow-up"></i> {{ uploading ? 'Processing File...' : 'Select & Upload Completed File' }}
                                 </button>

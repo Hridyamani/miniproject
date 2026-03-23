@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
@@ -13,7 +13,7 @@ import { AuthService } from '../../../services/auth.service';
   templateUrl: './outgoing.component.html',
   styleUrls: ['./outgoing.component.css']
 })
-export class OutgoingComponent implements OnInit {
+export class OutgoingComponent implements OnInit, OnDestroy {
   date = new Date().toISOString().split('T')[0];
   timeLeaving = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
@@ -22,11 +22,20 @@ export class OutgoingComponent implements OnInit {
   msg = '';
   msgType = '';
   records: any[] = [];
+  timer: any;
 
   constructor(private http: HttpClient, private auth: AuthService) { }
 
   ngOnInit() {
     this.loadRecords();
+    this.timer = setInterval(() => {
+      this.date = new Date().toISOString().split('T')[0];
+      this.timeLeaving = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    }, 1000);
+  }
+
+  ngOnDestroy() {
+    if (this.timer) clearInterval(this.timer);
   }
 
   get headers() {

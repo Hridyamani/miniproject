@@ -129,8 +129,10 @@ exports.markOutgoing = async (req, res) => {
     if (settings) {
       const { openTime, closeTime } = settings;
       const now = new Date();
-      const currentH = now.getHours();
-      const currentM = now.getMinutes();
+      const istString = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+      const istDate = new Date(istString);
+      const currentH = istDate.getHours();
+      const currentM = istDate.getMinutes();
       const currentTotal = currentH * 60 + currentM;
 
       const [oh, om] = (openTime || '06:00').split(':').map(Number);
@@ -146,7 +148,7 @@ exports.markOutgoing = async (req, res) => {
     }
 
     const now = new Date();
-    const currentTime = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const currentTime = now.toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' });
 
     const outgoing = new Outgoing({
       student: req.user._id,
@@ -218,8 +220,10 @@ exports.markHomeGoing = async (req, res) => {
     if (settings) {
       const { openTime, closeTime } = settings;
       const now = new Date();
-      const currentH = now.getHours();
-      const currentM = now.getMinutes();
+      const istString = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+      const istDate = new Date(istString);
+      const currentH = istDate.getHours();
+      const currentM = istDate.getMinutes();
       const currentTotal = currentH * 60 + currentM;
 
       const [oh, om] = (openTime || '06:00').split(':').map(Number);
@@ -295,7 +299,7 @@ exports.markReturn = async (req, res) => {
     const { type, requestId, latitude, longitude } = req.body;
 
     const now = new Date();
-    const currentTime = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const currentTime = now.toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' });
 
     // Use Case Insensitive Match for Hostel Name Settings to avoid matching failures
     const settings = await HostelSettings.findOne({ 

@@ -226,6 +226,8 @@ exports.createUser = async (req, res) => {
             </div>
           `
       });
+    } catch (err) {
+      // Quietly handle email failure as account was already created
     }
 
     res.json({ 
@@ -872,6 +874,7 @@ const notifyUsers = async (users) => {
           </div>
         `
       });
-    } 
-  }
+    } catch (err) {
+      // Quietly handle individual email failure
+    }  }
 };

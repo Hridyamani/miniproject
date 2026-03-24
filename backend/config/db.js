@@ -4,8 +4,6 @@ const connectDB = async () => {
   try {
     if (!process.env.MONGODB_URI) {
       console.error('MONGODB_URI is not defined in environment variables');
-      console.log('Current working directory:', process.cwd());
-      console.log('Available env keys:', Object.keys(process.env).filter(key => !key.includes('SECRET') && !key.includes('PASS')));
       process.exit(1);
     }
 

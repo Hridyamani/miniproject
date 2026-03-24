@@ -226,9 +226,6 @@ exports.createUser = async (req, res) => {
             </div>
           `
       });
-    } catch (err) {
-      console.error('User Creation Email failed:', err);
-      // We still return success since user was created in DB
     }
 
     res.json({ 
@@ -875,8 +872,6 @@ const notifyUsers = async (users) => {
           </div>
         `
       });
-    } catch (err) {
-      console.error(`Failed to send email to ${user.email}:`, err);
-    }
+    } 
   }
 };

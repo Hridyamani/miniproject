@@ -53,7 +53,6 @@ exports.login = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Login error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -182,7 +181,6 @@ StaySphere Support Team`;
       user.resetPasswordToken = undefined;
       user.resetPasswordExpires = undefined;
       await user.save();
-      console.error('Email error:', err);
       return res.status(500).json({ message: 'Email could not be sent' });
     }
   } catch (error) {

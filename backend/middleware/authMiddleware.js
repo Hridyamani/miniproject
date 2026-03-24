@@ -31,6 +31,4 @@ exports.authorize = (...roles) => {
     }
     next();
   };
-  console.log("AUTH HEADER:", req.headers.authorization);
-  console.log("TOKEN:", token);
 };

@@ -112,6 +112,13 @@
     border: 2px solid #e2e8f0 !important;
 }
 
+.table-container {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
 .form-control {
     width: 100%;
     padding: 12px 16px;
@@ -133,7 +140,7 @@
     background: var(--card);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
-    overflow: hidden;
+    overflow-x: auto;
 }
 
 .table {
@@ -268,14 +275,14 @@
 }
 
 .form-section {
-    margin-bottom: 24px;
+    margin-bottom: 32px;
 }
 
 .form-section h4 {
     font-size: 14px;
     font-weight: 700;
     color: var(--primary);
-    margin-bottom: 16px;
+    margin-bottom: 20px;
     text-transform: uppercase;
     letter-spacing: .5px;
 }
@@ -283,8 +290,8 @@
 .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 12px;
+    gap: 24px;
+    margin-bottom: 20px;
 }
 
 .form-group {
@@ -294,8 +301,9 @@
 .form-group label {
     display: block;
     font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 6px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text-dark);
 }
 
 .full-width {
@@ -497,6 +505,7 @@
 .preview-table-wrapper {
     max-height: 400px;
     overflow-y: auto;
+    overflow-x: auto;
     border: 1px solid var(--border);
     border-radius: 12px;
 }

@@ -44,7 +44,15 @@ exports.getProfile = async (req, res) => {
     const settings = await HostelSettings.findOne({ 
       hostelName: { $regex: new RegExp(`^${user.hostelName}$`, 'i') } 
     });
-    res.json({ success: true, user, foodPreferenceWindow: settings?.foodPreferenceWindow || null });
+
+    // Check if away
+    const isOut = await Promise.all([
+      HomeGoing.exists({ student: user._id, isReturned: false, status: { $ne: 'cancelled' } }),
+      Outgoing.exists({ student: user._id, isReturned: false })
+    ]);
+    const isActuallyAway = isOut.some(x => x);
+
+    res.json({ success: true, user: { ...user._doc, password: '', isAway: !!isActuallyAway }, foodPreferenceWindow: settings?.foodPreferenceWindow || null });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

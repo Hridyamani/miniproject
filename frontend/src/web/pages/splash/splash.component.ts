@@ -13,7 +13,7 @@ export class SplashComponent {
   constructor(private router: Router) { }
 
   getStarted() {
-    this.router.navigate(['/role-select']);
+    this.router.navigate(['/login']);
   }
 
 }

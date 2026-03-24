@@ -13,7 +13,6 @@ import { AuthService } from '../../services/auth.service';
 })
 export class LoginComponent implements OnInit {
   loginForm: FormGroup;
-  role: string = 'student';
   isLoading = false;
   errorMessage = '';
   showPassword = false;
@@ -36,15 +35,18 @@ export class LoginComponent implements OnInit {
 
 
   ngOnInit() {
-    this.role = localStorage.getItem('selectedRole') || 'student';
+    // Role is no longer selected beforehand
   }
 
   onSubmit() {
     if (this.loginForm.valid) {
       this.isLoading = true;
       this.errorMessage = '';
-      this.authService.login({ ...this.loginForm.value, role: this.role }).subscribe({
-        next: () => this.router.navigate([`/${this.role}`]),
+      this.authService.login(this.loginForm.value).subscribe({
+        next: (res: any) => {
+          const role = res.user?.role || 'student';
+          this.router.navigate([`/${role}`]);
+        },
         error: (err) => {
           this.errorMessage = err.error?.message || 'Invalid User ID or Password.';
           this.isLoading = false;
@@ -66,7 +68,4 @@ export class LoginComponent implements OnInit {
     });
   }
 
-  goBack() {
-    this.router.navigate(['/role-select']);
-  }
 }

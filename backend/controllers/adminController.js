@@ -8,11 +8,15 @@ const HostelSettings = require('../models/HostelSettings');
 const HostelClosing = require('../models/HostelClosing');
 const Archive = require('../models/Archive');
 const XLSX = require('xlsx');
+const bcrypt = require('bcryptjs');
 const generatePassword = require('../utils/passwordGenerator');
 const sendEmail = require('../utils/sendEmail');
 
 //  User IDGenerator
-const getNextUserId = async (role) => {
+const getNextUserId = async (role, admissionNo = null) => {
+  if (role === 'student' && admissionNo) {
+    return `STU-${admissionNo.toUpperCase().trim()}`;
+  }
   const currentYear = new Date().getFullYear();
   const rolePrefixes = {
     student: 'STU',
@@ -185,7 +189,7 @@ exports.createUser = async (req, res) => {
 
     // Standard User Creation
     if (!userData.userId) {
-      userData.userId = await getNextUserId(userData.role);
+      userData.userId = await getNextUserId(userData.role, userData.admissionNo);
     }
 
     const exists = await User.findOne({
@@ -202,29 +206,34 @@ exports.createUser = async (req, res) => {
     await user.save(); 
 
     // Send Credentials via Email 
-    sendEmail({
-        email: user.email,
-        subject: 'Your Hostel Management Account Details',
-        message: `Hello ${user.name},\n\nYour account has been created.\n\nUser ID: ${user.userId}\nPassword: ${rawPassword}\n\nPlease log in and change your password after first login.\n\nLogin URL: ${process.env.FRONTEND_URL || 'http://localhost:4200'}\n\nThank you.`,
-        html: `
-          <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-            <h2 style="color: #2563eb;">Welcome to StaySphere!</h2>
-            <p>Hello <strong>${user.name}</strong>,</p>
-            <p>Your account has been created by the administrator.</p>
-            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 5px 0;"><strong>User ID:</strong> <code style="color: #e11d48;">${user.userId}</code></p>
-              <p style="margin: 5px 0;"><strong>Password:</strong> <code style="color: #e11d48;">${rawPassword}</code></p>
+    try {
+      await sendEmail({
+          email: user.email,
+          subject: 'Your Hostel Management Account Details',
+          message: `Hello ${user.name},\n\nYour account has been created.\n\nUser ID: ${user.userId}\nPassword: ${rawPassword}\n\nPlease log in and change your password after first login.\n\nLogin URL: ${process.env.FRONTEND_URL || 'http://localhost:4200'}\n\nThank you.`,
+          html: `
+            <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+              <h2 style="color: #2563eb;">Welcome to StaySphere!</h2>
+              <p>Hello <strong>${user.name}</strong>,</p>
+              <p>Your account has been created by the administrator.</p>
+              <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <p style="margin: 5px 0;"><strong>User ID:</strong> <code style="color: #e11d48;">${user.userId}</code></p>
+                <p style="margin: 5px 0;"><strong>Password:</strong> <code style="color: #e11d48;">${rawPassword}</code></p>
+              </div>
+              <p>Please log in and change your password after your first login.</p>
+              <a href="${process.env.FRONTEND_URL || 'http://localhost:4200'}" style="display: inline-block; background: #2563eb; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 10px;">Login Now</a>
+              <p style="margin-top: 20px; font-size: 13px; color: #64748b;">If you did not expect this, please contact the hostel admin.</p>
             </div>
-            <p>Please log in and change your password after your first login.</p>
-            <a href="${process.env.FRONTEND_URL || 'http://localhost:4200'}" style="display: inline-block; background: #2563eb; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 10px;">Login Now</a>
-            <p style="margin-top: 20px; font-size: 13px; color: #64748b;">If you did not expect this, please contact the hostel admin.</p>
-          </div>
-        `
-    }).catch(err => console.error('Background User Creation Email failed:', err));
+          `
+      });
+    } catch (err) {
+      console.error('User Creation Email failed:', err);
+      // We still return success since user was created in DB
+    }
 
     res.json({ 
       success: true, 
-      message: 'User created successfully. Credentials will be sent via email.',
+      message: 'User created successfully. Credentials sent via email.',
       user: { userId: user.userId, name: user.name } 
     });
   } catch (error) {
@@ -242,7 +251,6 @@ exports.updateUser = async (req, res) => {
     if (updates.hostelName) updates.hostelName = updates.hostelName.toUpperCase();
 
     if (updates.password) {
-      const bcrypt = require('bcryptjs');
       const salt = await bcrypt.genSalt(10);
       updates.password = await bcrypt.hash(updates.password, salt);
     } else {
@@ -717,7 +725,7 @@ exports.previewBulkStudents = async (req, res) => {
 
       // Auto-generate User ID if missing 
       if (!userId) {
-        userId = await getNextUserId('student');
+        userId = await getNextUserId('student', admissionNo);
       }
 
       const student = {
@@ -816,14 +824,19 @@ exports.confirmBulkUpload = async (req, res) => {
     for (const s of validStudents) {
       const rawPassword = generatePassword(); // Final random password
       const { status, error, ...data } = s;
-      data.password = rawPassword;
-      toSave.push(data);
+      
+      // Store plain details for notification
       emailsToNotify.push({
         email: data.email,
         name: data.name,
         userId: data.userId,
         password: rawPassword
       });
+
+      // Hash password manually before insertMany
+      const salt = await bcrypt.genSalt(10);
+      data.password = await bcrypt.hash(rawPassword, salt);
+      toSave.push(data);
     }
 
     await User.insertMany(toSave);

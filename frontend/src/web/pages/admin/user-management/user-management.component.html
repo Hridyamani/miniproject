@@ -113,19 +113,11 @@
                             <div class="form-section">
                                 <h4>Basic Information</h4>
                                 <div class="form-row">
-                                    <div class="form-group">
-                                        <label>User ID *</label>
-                                        <input class="form-control" formControlName="userId" [readonly]="editMode"
-                                            placeholder="e.g., ADM101" />
-                                    </div>
-                                    <div class="form-group">
+                                    <div class="form-group flex-1">
                                         <label>Full Name *</label>
-                                        <input class="form-control" formControlName="name"
-                                            placeholder="Enter full name" />
+                                        <input class="form-control" formControlName="name" placeholder="Enter full name" />
                                     </div>
-                                </div>
-                                <div class="form-row">
-                                    <div class="form-group">
+                                    <div class="form-group flex-1">
                                         <label>Role *</label>
                                         <select class="form-control" formControlName="role">
                                             <option value="student">Student</option>
@@ -134,29 +126,51 @@
                                             <option value="admin">Admin</option>
                                         </select>
                                     </div>
-                                    <div class="form-group">
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group flex-1">
                                         <label>Email *</label>
-                                        <input type="email" class="form-control" formControlName="email"
-                                            placeholder="email@example.com" />
+                                        <input type="email" class="form-control" formControlName="email" placeholder="email@example.com" />
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label>Phone *</label>
+                                        <input class="form-control" formControlName="phone" placeholder="Phone number" />
                                     </div>
                                 </div>
                                 <div class="form-row">
-                                    <div class="form-group">
-                                        <label>Phone *</label>
-                                        <input class="form-control" formControlName="phone"
-                                            placeholder="Phone number" />
+                                    <div class="form-group flex-1">
+                                        <label>College Name</label>
+                                        <input class="form-control" formControlName="collegeName" placeholder="e.g., GEC Palakkad" />
                                     </div>
+                                    <div class="form-group flex-1">
+                                        <label>Hostel Name</label>
+                                        <div class="input-with-btn">
+                                            <select class="form-control" formControlName="hostelName">
+                                                <option value="">Select Hostel</option>
+                                                <option *ngFor="let h of hostelNames" [value]="h">{{ h }}</option>
+                                            </select>
+                                            <button type="button" class="btn-plus" (click)="addHostel()" title="Add New">+</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row" *ngIf="editMode">
+                                    <div class="form-group full-width">
+                                        <label>User ID</label>
+                                        <input class="form-control" formControlName="userId" readonly />
+                                    </div>
+                                </div>
+                                <div class="form-row" *ngIf="!editMode">
                                     <div class="form-group full-width">
                                         <div class="info-notice">
                                             <i class="bi bi-info-circle"></i>
-                                            Password will be auto-generated and sent to the user via email instantly.
+                                            Password will be auto-generated and sent via email.
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="form-section">
-                                <h4>Additional Information</h4>
+                                <h4>Institutional Details</h4>
                                 <div class="form-row">
                                     <div class="form-group flex-1">
                                         <label>Department</label>
@@ -168,13 +182,42 @@
                                             <button type="button" class="btn-plus" (click)="addDepartment()" title="Add New">+</button>
                                         </div>
                                     </div>
+                                    <div class="form-group flex-1" *ngIf="['student', 'faculty', 'authority'].includes(userForm.get('role')?.value)">
+                                        <label>Room Number</label>
+                                        <input class="form-control" formControlName="roomNumber" placeholder="e.g., 201" />
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row" *ngIf="userForm.get('role')?.value === 'student'">
+                                    <div class="form-group flex-1">
+                                        <label>Admission No</label>
+                                        <input class="form-control" formControlName="admissionNo" placeholder="Admission Number" />
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label>Batch</label>
+                                        <input class="form-control" formControlName="semester" placeholder="e.g., 2021-2025" />
+                                    </div>
+                                </div>
+
+                                <div class="form-row" *ngIf="userForm.get('role')?.value === 'authority'">
+                                    <div class="form-group full-width">
+                                        <label>Authority Role</label>
+                                        <select class="form-control" formControlName="authorityRole">
+                                            <option value="">Select Specialty</option>
+                                            <option *ngFor="let r of authorityRoles" [value]="r">{{ r }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <h4>Personal & Additional Info</h4>
+                                <div class="form-row">
                                     <div class="form-group flex-1">
                                         <label>Date of Birth</label>
                                         <input type="date" class="form-control" formControlName="dateOfBirth" />
                                     </div>
-                                </div>
-                                <div class="form-row">
-                                    <div class="form-group">
+                                    <div class="form-group flex-1">
                                         <label>Blood Group</label>
                                         <select class="form-control" formControlName="bloodGroup">
                                             <option value="">Select</option>
@@ -189,67 +232,22 @@
                                             <option value="Other">Other</option>
                                         </select>
                                     </div>
-                                    <div class="form-group">
-                                        <label>College Name</label>
-                                        <input class="form-control" formControlName="collegeName"
-                                            placeholder="e.g., GEC Palakkad" />
-                                    </div>
                                 </div>
-                                <div class="form-row">
+                                
+                                <div class="form-row" *ngIf="userForm.get('role')?.value === 'student'">
                                     <div class="form-group flex-1">
-                                        <label>Hostel Name</label>
-                                        <div class="input-with-btn">
-                                            <select class="form-control" formControlName="hostelName">
-                                                <option value="">Select Hostel</option>
-                                                <option *ngFor="let h of hostelNames" [value]="h">{{ h }}</option>
-                                            </select>
-                                            <button type="button" class="btn-plus" (click)="addHostel()" title="Add New">+</button>
-                                        </div>
-                                    </div>
-                                    <div class="form-group flex-1"
-                                        *ngIf="['student', 'faculty', 'authority'].includes(userForm.get('role')?.value)">
-                                        <label>Room Number</label>
-                                        <input class="form-control" formControlName="roomNumber"
-                                            placeholder="e.g., 201" />
-                                    </div>
-                                </div>
-
-                                <div class="form-row" *ngIf="userForm.get('role')?.value === 'authority'">
-                                    <div class="form-group full-width">
-                                        <label>Authority Specialized Role (Task 9)</label>
-                                        <select class="form-control" formControlName="authorityRole">
-                                            <option value="">Select Specialty</option>
-                                            <option *ngFor="let r of authorityRoles" [value]="r">{{ r }}</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div *ngIf="userForm.get('role')?.value === 'student'" class="form-section">
-                                <h4>Student Specific Details</h4>
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label>Admission No</label>
-                                        <input class="form-control" formControlName="admissionNo" />
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Semester</label>
-                                        <input class="form-control" formControlName="semester" placeholder="e.g., S6" />
-                                    </div>
-                                </div>
-                                <div class="form-row">
-                                    <div class="form-group">
                                         <label>Guardian's Name</label>
                                         <input class="form-control" formControlName="guardiansName" />
                                     </div>
-                                    <div class="form-group">
+                                    <div class="form-group flex-1">
                                         <label>Guardian's Phone</label>
                                         <input class="form-control" formControlName="guardiansPhone" />
                                     </div>
                                 </div>
+
                                 <div class="form-group full-width">
                                     <label>Address</label>
-                                    <textarea class="form-control" formControlName="address" rows="2"></textarea>
+                                    <textarea class="form-control" formControlName="address" rows="2" placeholder="Full Address"></textarea>
                                 </div>
                             </div>
                         </div>

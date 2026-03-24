@@ -9,16 +9,16 @@
             </div>
 
             <!-- Stage Progress Indicator -->
-            <div class="workflow-steps mb-4">
-                <div class="step" [class.active]="stage >= 1">A. Bills</div>
+            <div class="workflow-steps mb-5">
+                <div class="step" [class.active]="stage >= 1"><span class="step-num">A</span> Bills</div>
                 <div class="step-divider"></div>
-                <div class="step" [class.active]="stage >= 2">B. Expenses</div>
+                <div class="step" [class.active]="stage >= 2"><span class="step-num">B</span> Expenses</div>
                 <div class="step-divider"></div>
-                <div class="step" [class.active]="stage >= 3">C. Stock Valuation</div>
+                <div class="step" [class.active]="stage >= 3"><span class="step-num">C</span> Stock</div>
                 <div class="step-divider"></div>
-                <div class="step" [class.active]="stage >= 4">D. Total</div>
+                <div class="step" [class.active]="stage >= 4"><span class="step-num">D</span> Review</div>
                 <div class="step-divider"></div>
-                <div class="step" [class.active]="stage === 5">E. Final</div>
+                <div class="step" [class.active]="stage === 5"><span class="step-num">E</span> Final Result</div>
             </div>
 
             <!-- SECTION A: Bills -->
@@ -34,12 +34,12 @@
                         </div>
                     </div>
 
-                    <div class="row g-3 mb-4 entry-form bg-light p-3 rounded">
+                    <div class="row g-4 mb-5 entry-form bg-light p-4 rounded shadow-sm border">
                         <div class="col-md-2"><label>Item </label><input type="text" class="form-control" [(ngModel)]="newItem.type" placeholder="Item"></div>
                         <div class="col-md-2"><label>Shop Name</label><input type="text" class="form-control" [(ngModel)]="newItem.shop" placeholder="Shop"></div>
                         <div class="col-md-2">
                             <label>Category</label>
-                            <select class="form-control" [(ngModel)]="newItem.category">
+                            <select class="form-control shadow-none" [(ngModel)]="newItem.category">
                                 <option value="veg">Veg</option>
                                 <option value="non-veg">Non-Veg</option>
                                 <option value="common">Common </option>
@@ -47,10 +47,10 @@
                         </div>
                         <div class="col-md-2"><label>Amount (₹)</label><input type="number" class="form-control" [(ngModel)]="newItem.amount"></div>
                         <div class="col-md-2"><label>Upload Bill</label><input type="file" class="form-control" (change)="onFileChange($event)"></div>
-                        <div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary w-100" (click)="addBill()"><i class="bi bi-plus-lg"></i> Add</button></div>
+                        <div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary-fancy w-100 py-2 shadow-sm" (click)="addBill()"><i class="bi bi-plus-lg"></i> Add Item</button></div>
                     </div>
 
-                    <div class="table-responsive">
+                    <div class="table-responsive mt-5">
                         <table class="modern-table">
                             <thead><tr><th>Item</th><th>Shop</th><th>Category</th><th>Amount</th><th>File</th><th>Action</th></tr></thead>
                             <tbody>
@@ -64,7 +64,11 @@
                         </table>
                     </div>
                 </div>
-                <div class="text-end p-4 border-top"><button class="btn btn-success btn-lg" (click)="goToB()">Next  <i class="bi bi-arrow-right"></i></button></div>
+                <div class="d-flex justify-content-end p-5 border-top mt-5">
+                    <button class="btn btn-success btn-lg px-5 shadow-sm" (click)="goToB()">
+                        Next Step <i class="bi bi-arrow-right ms-2"></i>
+                    </button>
+                </div>
             </div>
 
             <!-- SECTION B: Common Monthy Expenses -->
@@ -73,10 +77,10 @@
                     <h3>Section B: Common Monthly Expenses (Divided Equally)</h3>
                 </div>
                 <div class="p-4">
-                    <div class="row g-3 mb-4 entry-form bg-light p-3 rounded">
+                    <div class="row g-4 mb-5 entry-form bg-light p-4 rounded shadow-sm border">
                         <div class="col-md-5"><label>Expense Type</label><input type="text" class="form-control" [(ngModel)]="newExpense.type" placeholder="Salary, Cleaning, etc"></div>
                         <div class="col-md-5"><label>Total Amount (₹)</label><input type="number" class="form-control" [(ngModel)]="newExpense.amount"></div>
-                        <div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary w-100" (click)="addExpense()"><i class="bi bi-plus-lg"></i> Add</button></div>
+                        <div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary-fancy w-100 py-2 shadow-sm" (click)="addExpense()"><i class="bi bi-plus-lg"></i> Add Expense</button></div>
                     </div>
                     <!-- Milk Calculation -->
                     <div class="row g-3 mb-4 entry-form bg-light p-3 rounded border-primary border">
@@ -96,9 +100,13 @@
                         </table>
                     </div>
                 </div>
-                <div class="d-flex justify-content-between p-4 border-top">
-                    <button class="btn btn-outline-secondary" (click)="stage = 1">Back</button>
-                    <button class="btn btn-success btn-lg" (click)="goToC()">Next <i class="bi bi-arrow-right"></i></button>
+                <div class="d-flex justify-content-between p-5 border-top mt-4">
+                    <button class="btn btn-outline-secondary btn-lg px-4" (click)="stage = 1">
+                        <i class="bi bi-arrow-left me-2"></i> Back
+                    </button>
+                    <button class="btn btn-success btn-lg px-5 shadow-sm" (click)="goToC()">
+                        Next Step <i class="bi bi-arrow-right ms-2"></i>
+                    </button>
                 </div>
             </div>
 
@@ -129,9 +137,13 @@
                         </div>
                     </div>
                 </div>
-                <div class="d-flex justify-content-between p-4 border-top">
-                    <button class="btn btn-outline-secondary" (click)="stage = 2">Back</button>
-                    <button class="btn btn-success btn-lg" (click)="goToD()">Next <i class="bi bi-arrow-right"></i></button>
+                <div class="d-flex justify-content-between p-5 border-top mt-4">
+                    <button class="btn btn-outline-secondary btn-lg px-4" (click)="stage = 2">
+                        <i class="bi bi-arrow-left me-2"></i> Back
+                    </button>
+                    <button class="btn btn-success btn-lg px-5 shadow-sm" (click)="goToD()">
+                        Next Step <i class="bi bi-arrow-right ms-2"></i>
+                    </button>
                 </div>
             </div>
 
@@ -164,9 +176,13 @@
                         </table>
                     </div>
                 </div>
-                <div class="d-flex justify-content-between p-4 border-top">
-                    <button class="btn btn-outline-secondary" (click)="stage = 3">Back</button>
-                    <button class="btn btn-success btn-lg" (click)="calculateFinal()">Calculate Final Bill <i class="bi bi-calculator"></i></button>
+                <div class="d-flex justify-content-between p-5 border-top mt-4">
+                    <button class="btn btn-outline-secondary btn-lg px-4" (click)="stage = 3">
+                        <i class="bi bi-arrow-left me-2"></i> Back
+                    </button>
+                    <button class="btn btn-success btn-lg px-5 shadow-sm" (click)="calculateFinal()">
+                        Calculate Final Bill <i class="bi bi-calculator ms-2"></i>
+                    </button>
                 </div>
             </div>
 
@@ -177,22 +193,39 @@
                 </div>
                 <div class="table-responsive">
                     <table class="modern-table">
-                        <thead><tr><th>Name</th><th>Role</th><th>Mess Days</th><th>Milk Days</th><th>Mess taken Bill (₹)</th><th> Milk Bill (₹)</th><th>Total bill (₹)</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Food</th>
+                                <th>Mess Days</th>
+                                <th>Rate/Day (₹)</th>
+                                <th>Mess Bill (₹)</th>
+                                <th>Common Share (₹)</th>
+                                <th>Milk Bill (₹)</th>
+                                <th>Total Bill (₹)</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             <tr *ngFor="let s of finalReport">
-                                <td>{{s.name}}</td><td>{{s.role | titlecase}}</td>
+                                <td>{{s.name}}<br><small class="text-muted">{{s.role | titlecase}}</small></td>
+                                <td><span class="badge" [ngClass]="s.foodType">{{s.foodType | titlecase}}</span></td>
                                 <td>{{s.messDays}}</td>
-                                <td>{{s.milkTakenDays}}</td>
+                                <td><strong>₹{{s.perDayRate | number:'1.2-2'}}</strong></td>
                                 <td>₹{{ s.messBill | number:'1.2-2' }}</td>
+                                <td>₹{{ s.commonBillShare | number:'1.2-2' }}</td>
                                 <td>₹{{ s.milkBill | number:'1.2-2' }}</td>
                                 <td class="total-td"><strong>₹{{s.totalAmount | number:'1.2-2'}}</strong></td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-                <div class="d-flex justify-content-between align-items-center p-4 border-top">
-                    <button class="btn btn-outline-secondary btn-lg" (click)="stage = 4">Edit & Review Details</button>
-                    <button class="btn btn-primary btn-lg ms-3" (click)="printReport()"><i class="bi bi-download"></i> Print Bill Report</button>
+                <div class="d-flex justify-content-between align-items-center p-5 border-top mt-4">
+                    <button class="btn btn-outline-secondary btn-lg px-4" (click)="stage = 4">
+                        <i class="bi bi-arrow-left me-2"></i> Edit & Review Details
+                    </button>
+                    <button class="btn btn-primary-fancy btn-lg px-5 shadow-sm" (click)="printReport()">
+                        <i class="bi bi-download me-2"></i> Print Bill Report
+                    </button>
                 </div>
             </div>
 

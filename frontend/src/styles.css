@@ -44,12 +44,37 @@
   padding: 0;
 }
 
-html, body {
+html {
+  scrollbar-gutter: stable;
   height: 100%;
+}
+
+body {
+  min-height: 100%;
   font-family: 'Inter', sans-serif;
   background: var(--background);
   color: var(--text-dark);
-  overflow-x: hidden;
+  line-height: 1.5;
+}
+
+/* Modern, Subtle Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+  border: 2px solid var(--background);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 /*  HEADINGS */
@@ -69,10 +94,10 @@ h1, h2, h3, h4, h5 {
 .card, .dashboard-card {
   background: var(--card-bg);
   border-radius: 18px;
-  padding: 24px;
+  padding: 28px;
   box-shadow: var(--shadow-soft);
   border: 1px solid rgba(255, 255, 255, 0.5);
-  margin-bottom: 20px;
+  margin-bottom: 28px;
 }
 
 /*  BUTTONS */
@@ -91,6 +116,11 @@ h1, h2, h3, h4, h5 {
   align-items: center;
   justify-content: center;
   gap: 8px;
+}
+
+.btn-lg {
+  padding: 14px 28px !important;
+  font-weight: 700 !important;
 }
 
 .primary-btn:hover, .btn-primary:hover {
@@ -112,7 +142,7 @@ h1, h2, h3, h4, h5 {
   transition: all .2s;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .secondary-btn:hover, .btn-secondary:hover {
@@ -212,9 +242,27 @@ input:focus, textarea:focus, .form-control:focus {
 }
 
 /*  LAYOUT  */
-.dashboard-layout { display: flex; min-height: 100vh; }
-.main-content { margin-left: 260px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
-.page-content { padding: 32px; flex: 1; }
+.dashboard-layout { 
+  display: flex; 
+  min-height: 100vh;
+  width: 100%;
+}
+
+.main-content { 
+  margin-left: 260px; 
+  flex: 1; 
+  display: flex; 
+  flex-direction: column; 
+  background: var(--background);
+  min-height: 100vh;
+}
+
+.page-content { 
+  padding: 32px; 
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+}
 
 .flex-center { display: flex; justify-content: center; align-items: center; }
 .dashboard-wrapper { padding: 30px; }
@@ -421,14 +469,16 @@ input:focus, textarea:focus, .form-control:focus {
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 24px;
+  margin-bottom: 24px;
 }
 
-.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group { display: flex; flex-direction: column; gap: 8px; }
 .form-group label, .form-label {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-dark);
+  margin-bottom: 2px;
 }
 
 .form-control:focus {

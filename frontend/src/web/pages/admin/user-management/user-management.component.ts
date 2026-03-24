@@ -39,7 +39,7 @@ export class UserManagementComponent implements OnInit {
   departments: string[] = [];
   hostelNames: string[] = [];
   
-  authorityRoles = ['Warden', 'Resident Tutor', 'Hostel Secretary', 'Mess Secretary', 'Floor Secretary', 'Wing Secretary'];
+  authorityRoles = ['Warden', 'Resident Tutor', 'Hostel Secretary', 'Mess Secretary', 'Floor Secretary', 'Wing Secretary', 'Matron'];
 
   constructor(private fb: FormBuilder, private http: HttpClient, private auth: AuthService) {
     this.userForm = this.fb.group({

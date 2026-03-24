@@ -55,4 +55,14 @@ export class FacultyHomeGoingComponent implements OnInit {
       error: (err) => alert(err.error?.message || 'Submission failed')
     });
   }
+
+  markReturn(id: string) {
+    this.http.put(`http://localhost:5000/api/faculty/home-going/${id}/return`, {}, this.headers).subscribe({
+      next: (res: any) => {
+        alert(res.message);
+        this.loadHomeGoings();
+      },
+      error: (err) => alert(err.error?.message || 'Return marking failed')
+    });
+  }
 }

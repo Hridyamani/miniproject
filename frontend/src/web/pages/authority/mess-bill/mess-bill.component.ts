@@ -97,27 +97,43 @@ export class MessBillComponent implements OnInit {
 
   // Section E: Final Calculation
   calculateFinal() {
-    const totalBills = this.bills.reduce((sum, b) => sum + b.amount, 0);
-    const totalCommonExp = this.commonExpenses.reduce((sum, e) => sum + e.amount, 0);
-    const totalExtraStock = this.extraStockAmount;
+    const totalInmates = this.allInmates.length || 1;
+    
+    // Categorized Bills from Category A
+    const commonFoodBills = this.bills.filter(b => b.category === 'common').reduce((sum, b) => sum + b.amount, 0);
+    const vegFoodBills = this.bills.filter(b => b.category === 'veg').reduce((sum, b) => sum + b.amount, 0);
+    const nonVegFoodBills = this.bills.filter(b => b.category === 'non-veg').reduce((sum, b) => sum + b.amount, 0);
 
-    // Mess Consumption
-    const totalMessConsumption = (this.previousMonthLeftOut + totalBills + totalCommonExp) - totalExtraStock;
-    
-    // Total Mess Days of ALL inmates
+    // Stock Adjustment (Apply to common food cost as it's general)
+    const adjustedCommonFood = (this.previousMonthLeftOut + commonFoodBills) - this.extraStockAmount;
+
+    // Fixed Common Expenses from Category B
+    const totalFixedCommonExp = this.commonExpenses.reduce((sum, e) => sum + e.amount, 0);
+    const commonBillShare = totalFixedCommonExp / totalInmates;
+
+    // Mess Days Aggregates for Rate Calculation
     const totalAllMessDays = this.allInmates.reduce((sum, i) => sum + (i.messDays || 0), 0) || 1;
-    
-    // Daily Mess Rate
-    const dailyMessRate = totalMessConsumption / totalAllMessDays;
+    const totalVegMessDays = this.allInmates.filter(i => i.foodType === 'veg').reduce((sum, i) => sum + (i.messDays || 0), 0) || 1;
+    const totalNonVegMessDays = this.allInmates.filter(i => i.foodType === 'non-veg').reduce((sum, i) => sum + (i.messDays || 0), 0) || 1;
+
+    // Per-Day Rates
+    const commonDailyRate = adjustedCommonFood / totalAllMessDays;
+    const vegDailyRate = vegFoodBills / totalVegMessDays;
+    const nonVegDailyRate = nonVegFoodBills / totalNonVegMessDays;
 
     this.finalReport = this.allInmates.map(i => {
-      const messBill = dailyMessRate * (i.messDays || 0);
+      const categoryRate = i.foodType === 'veg' ? vegDailyRate : nonVegDailyRate;
+      
+      const messBill = (commonDailyRate + categoryRate) * (i.messDays || 0);
       const milkBill = this.dailyMilkRate * (i.milkTakenDays || 0);
-      const totalAmount = messBill + milkBill;
+      const totalAmount = messBill + commonBillShare + milkBill;
       
       return {
         ...i,
-        dailyMessRate,
+        commonDailyRate,
+        categoryRate,
+        perDayRate: commonDailyRate + categoryRate,
+        commonBillShare,
         messBill,
         milkBill,
         totalAmount
@@ -125,7 +141,7 @@ export class MessBillComponent implements OnInit {
     });
 
     // Save current leftovers to backend
-    this.saveInventory(totalExtraStock);
+    this.saveInventory(this.extraStockAmount);
 
     this.stage = 5;
   }
@@ -137,15 +153,15 @@ export class MessBillComponent implements OnInit {
       leftOutAmount: amount
     };
     this.http.post('http://localhost:5000/api/authority/mess-inventory', data, this.headers).subscribe({
-      next: () => console.log('Monthly leftovers saved'),
-      error: err => console.error('Failed to save leftovers:', err.error?.message)
+      next: () => {},
+      error: () => {}
     });
   }
 
   printReport() {
-    let csv = 'Name,Role,Mess Days,Milk Days,Mess Bill (₹),Milk Bill (₹),Total Bill (₹)\n';
+    let csv = 'Name,Role,Food,Mess Days,Mess Bill (₹),Common Share (₹),Milk Bill (₹),Total Bill (₹)\n';
     this.finalReport.forEach(r => {
-      csv += `${r.name},${r.role},${r.messDays},${r.milkTakenDays},${r.messBill.toFixed(2)},${r.milkBill.toFixed(2)},${r.totalAmount.toFixed(2)}\n`;
+      csv += `${r.name},${r.role},${r.foodType},${r.messDays},${r.messBill.toFixed(2)},${r.commonBillShare.toFixed(2)},${r.milkBill.toFixed(2)},${r.totalAmount.toFixed(2)}\n`;
     });
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);

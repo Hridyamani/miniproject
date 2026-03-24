@@ -13,32 +13,24 @@ const generateToken = (userId, role) => {
 // Login user
 exports.login = async (req, res) => {
   try {
-    const { userId, password, role } = req.body;
-    console.log("LOGIN ATTEMPT:", { userId, role, passwordProvided: !!password });
+    const { userId, password } = req.body;
 
-    if (!userId || !password || !role) {
-      console.log("❌ Missing fields");
-      return res.status(400).json({ message: 'Please provide userId, password and role' });
+    if (!userId || !password) {
+      return res.status(400).json({ message: 'Please provide userId and password' });
     }
 
-    const user = await User.findOne({ userId, role });
+    const user = await User.findOne({ userId });
     if (!user) {
-      console.log("❌ User not found for userId and role:", { userId, role });
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    console.log("USER FOUND:", { userId: user.userId, role: user.role, isActive: user.isActive });
-
     if (!user.isActive) {
-      console.log("❌ User is inactive");
       return res.status(401).json({ message: 'Account is deactivated. Contact admin.' });
     }
 
     const isMatch = await user.matchPassword(password);
-    console.log("PASSWORD MATCH:", isMatch);
-
+    
     if (!isMatch) {
-      console.log("❌ Password mismatch");
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
@@ -56,7 +48,8 @@ exports.login = async (req, res) => {
         role: user.role,
         email: user.email,
         phone: user.phone,
-        hostelName: user.hostelName
+        hostelName: user.hostelName,
+        authorityRole: user.authorityRole
       }
     });
   } catch (error) {
@@ -228,8 +221,20 @@ exports.getMe = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    const { password, ...userWithoutPassword } = user;
-    res.json({ success: true, user: userWithoutPassword });
+
+    // Check if away (Home Going or Outgoing)
+    const HomeGoing = require('../models/HomeGoing');
+    const Outgoing = require('../models/Outgoing');
+
+    const isHomeGoing = await HomeGoing.exists({ student: user._id, isReturned: false, status: { $ne: 'cancelled' } });
+    let isOutgoing = false;
+    if (user.role === 'student') {
+      isOutgoing = await Outgoing.exists({ student: user._id, isReturned: false });
+    }
+
+    const isActuallyAway = isHomeGoing || isOutgoing;
+
+    res.json({ success: true, user: { ...user._doc, password: '', isAway: !!isActuallyAway } });
   } catch (error) {
     res.status(500).json({ message: 'Server not responding' });
   }

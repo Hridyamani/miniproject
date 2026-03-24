@@ -36,7 +36,10 @@
 
         <div class="user-profile-chip">
             <div class="user-details">
-                <span class="u-name">{{ userName }}</span>
+                <div class="d-flex align-items-center">
+                    <span class="u-name">{{ userName }}</span>
+                    <span *ngIf="auth.userValue?.isAway" class="badge-status-away">ABSENT (OUT)</span>
+                </div>
                 <span class="u-role">{{ auth.userValue?.role | titlecase }}</span>
             </div>
             <div class="u-avatar">{{ userInitials }}</div>

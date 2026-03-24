@@ -54,7 +54,6 @@
                                 <tr>
                                     <th>Room</th>
                                     <th>Student Name</th>
-                                    <th>Milk</th>
                                     <th style="text-align: right">Attendance</th>
                                 </tr>
                             </thead>
@@ -70,14 +69,6 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td>
-                                        <div class="milk-check">
-                                            <input type="checkbox" [checked]="markedMilk[s._id]" 
-                                                (change)="markIndividual(s._id, markedStudents[s._id] || 'present', $any($event.target).checked)"
-                                                [disabled]="markedStudents[s._id] === 'absent'">
-                                            <i class="bi bi-droplet-fill" [class.active]="markedMilk[s._id]"></i>
-                                        </div>
-                                    </td>
                                     <td style="text-align: right">
                                         <div class="action-btns">
                                             <button [class.active]="markedStudents[s._id] === 'present'"
@@ -90,7 +81,7 @@
                                     </td>
                                 </tr>
                                 <tr *ngIf="filteredAttendanceStudents.length === 0">
-                                    <td colspan="4" class="empty-state">No matching students found.</td>
+                                    <td colspan="3" class="empty-state">No matching students found.</td>
                                 </tr>
                             </tbody>
                         </table>

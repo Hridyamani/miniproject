@@ -9,9 +9,13 @@ const HostelClosing = require('../models/HostelClosing');
 const MessInventory = require('../models/MessInventory');
 
 
-// Get pending requests 
 exports.getPendingRequests = async (req, res) => {
   try {
+    const allowed = ['Warden', 'Resident Tutor', 'Matron'];
+    if (!allowed.includes(req.user.authorityRole)) {
+      return res.status(403).json({ message: 'Access denied: Requires Approval Authority role.' });
+    }
+
     const homeGoings = await HomeGoing.find({ status: 'pending', recordingType: 'request' })
       .populate('student', 'name roomNumber')
       .sort({ createdAt: -1 });
@@ -89,9 +93,20 @@ exports.markAttendance = async (req, res) => {
 
       let record = await Attendance.findOne({ student: studentId, date: markingDate });
 
+      // FORCE ABSENT if student is currently "Out" (Home Going or Outgoing)
+      let finalStatus = status;
+      const isOut = await Promise.all([
+        HomeGoing.exists({ student: studentId, isReturned: false, status: { $ne: 'cancelled' } }),
+        Outgoing.exists({ student: studentId, isReturned: false })
+      ]);
+
+      if (isOut.some(x => x) && status === 'present') {
+        finalStatus = 'absent';
+      }
+
       if (record) {
-        record.status = status;
-        record.milkTaken = (status === 'present') ? !!milkTaken : false;
+        record.status = finalStatus;
+        record.milkTaken = (finalStatus === 'present') ? !!milkTaken : false;
         record.remarks = remarks || '';
         record.markedBy = req.user._id;
         record.role = req.user.role;
@@ -102,8 +117,8 @@ exports.markAttendance = async (req, res) => {
           admissionNo: student.admissionNo,
           roomNumber: student.roomNumber,
           date: markingDate,
-          status,
-          milkTaken: (status === 'present') ? !!milkTaken : false,
+          status: finalStatus,
+          milkTaken: (finalStatus === 'present') ? !!milkTaken : false,
           remarks: remarks || '',
           markedBy: req.user._id,
           role: req.user.role
@@ -122,6 +137,10 @@ exports.markAttendance = async (req, res) => {
 // Hostel Closed Days
 exports.markHostelClosed = async (req, res) => {
   try {
+    const allowed = ['Warden', 'Resident Tutor', 'Matron', 'Hostel Secretary'];
+    if (!allowed.includes(req.user.authorityRole)) {
+      return res.status(403).json({ message: 'Access denied: Requires Admin/Warden level authority for hostel closing.' });
+    }
     const { date, reason } = req.body;
     const closedDate = new Date(date);
     closedDate.setHours(0, 0, 0, 0);
@@ -178,6 +197,10 @@ exports.getStudents = async (req, res) => {
 // Get faculty
 exports.getFaculty = async (req, res) => {
   try {
+    const forbidden = ['Floor Secretary', 'Wing Secretary'];
+    if (forbidden.includes(req.user.authorityRole)) {
+      return res.status(403).json({ message: 'Access denied: Secretaries cannot view faculty records.' });
+    }
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -256,6 +279,10 @@ exports.getReports = async (req, res) => {
 // Notification Management
 exports.publishNotification = async (req, res) => {
   try {
+    const forbidden = ['Floor Secretary', 'Wing Secretary'];
+    if (forbidden.includes(req.user.authorityRole)) {
+      return res.status(403).json({ message: 'Access denied: Secretaries cannot publish announcements.' });
+    }
     const { title, message, targetRole, type } = req.body;
     let pdfUrl = null;
     if (req.file) {
@@ -297,6 +324,10 @@ exports.getNotifications = async (req, res) => {
 // Delete a notification
 exports.deleteNotification = async (req, res) => {
   try {
+    const forbidden = ['Floor Secretary', 'Wing Secretary'];
+    if (forbidden.includes(req.user.authorityRole)) {
+      return res.status(403).json({ message: 'Access denied: Secretaries cannot delete announcements.' });
+    }
     const { id } = req.params;
     const notification = await Notification.findOneAndDelete({ _id: id, sender: req.user._id });
     if (!notification) return res.status(404).json({ message: 'Notification not found' });
@@ -306,9 +337,13 @@ exports.deleteNotification = async (req, res) => {
   }
 };
 
-// Get data for Mess Bill calculation
 exports.getMessBillData = async (req, res) => {
   try {
+    const allowed = ['Hostel Secretary', 'Matron', 'Mess Secretary'];
+    if (!allowed.includes(req.user.authorityRole)) {
+      return res.status(403).json({ message: 'Access denied: Requires Mess Billing Authority role.' });
+    }
+
     const { month, year } = req.query;
     if (!month || !year) return res.status(400).json({ message: 'Month and year are required' });
 

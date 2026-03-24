@@ -23,34 +23,33 @@ export class SidebarComponent {
     return this.authService.userValue?.authorityRole || '';
   }
 
-  get canAccessMessPages(): boolean {
-    // Mess Secretary, Warden, Admin can see mess pages.
-    // Floor/Wing Secretary cannot.
-    if (['Floor Secretary', 'Wing Secretary'].includes(this.authorityRole)) return false;
-    return true;
-  }
-
   get canAccessApprovals(): boolean {
-    // Mess Secretary, Hostel Secretary, Floor/Wing Secretary cannot see approvals.
-    if (['Mess Secretary', 'Hostel Secretary', 'Floor Secretary', 'Wing Secretary'].includes(this.authorityRole)) return false;
-    return true;
+    const role = this.authorityRole;
+    return ['Warden', 'Resident Tutor', 'Matron'].includes(role);
   }
 
-  get canAccessProfiles(): boolean {
-    // Mess Secretary, Floor/Wing Secretary cannot see profile pages.
-    if (['Mess Secretary', 'Floor Secretary', 'Wing Secretary'].includes(this.authorityRole)) return false;
-    return true;
+  get canAccessMessPages(): boolean {
+    const role = this.authorityRole;
+    return ['Mess Secretary', 'Hostel Secretary', 'Matron'].includes(role);
   }
 
-  get canAccessAttendance(): boolean {
-    // Everyone in authority can see attendance.
-    return true;
+  get canAccessStudentAttendance(): boolean {
+    return true; // All authority users
+  }
+
+  get canAccessFacultyAttendance(): boolean {
+    const role = this.authorityRole;
+    return !['Floor Secretary', 'Wing Secretary'].includes(role);
   }
 
   get canAccessHostelClosing(): boolean {
-    // Floor/Wing/Mess Secretary cannot see hostel closing.
-    if (['Floor Secretary', 'Wing Secretary', 'Mess Secretary'].includes(this.authorityRole)) return false;
-    return true;
+    const role = this.authorityRole;
+    return ['Warden', 'Resident Tutor', 'Matron', 'Hostel Secretary'].includes(role);
+  }
+
+  get canAccessAnnouncements(): boolean {
+    const role = this.authorityRole;
+    return !['Floor Secretary', 'Wing Secretary'].includes(role);
   }
 
   get isFloorWingSecretary(): boolean {

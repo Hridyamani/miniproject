@@ -22,7 +22,11 @@ exports.getProfile = async (req, res) => {
 
     const HostelSettings = require('../models/HostelSettings');
     const settings = await HostelSettings.findOne({ hostelName: user.hostelName });
-    res.json({ success: true, user, foodPreferenceWindow: settings?.foodPreferenceWindow || null });
+
+    // Check if away
+    const isAway = await HomeGoing.exists({ student: user._id, isReturned: false, status: { $ne: 'cancelled' } });
+
+    res.json({ success: true, user: { ...user._doc, password: '', isAway: !!isAway }, foodPreferenceWindow: settings?.foodPreferenceWindow || null });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -113,12 +117,25 @@ exports.markSelfAttendance = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Attendance already marked for today.' });
     }
 
+    // NEW: Check if currently away (Home Going)
+    let finalStatus = status;
+    const activeHomeGoing = await HomeGoing.findOne({
+      student: req.user._id,
+      isReturned: false,
+      status: { $ne: 'cancelled' }
+    });
+
+    if (activeHomeGoing && status === 'present') {
+      finalStatus = 'absent';
+      // Optionally notify user why they are marked absent
+    }
+
     const user = await User.findById(req.user._id);
     const attendance = new Attendance({
       student: req.user._id,
       studentName: user.name,
       date: attendanceDate,
-      status,
+      status: finalStatus,
       role: 'faculty',
       markedBy: req.user._id
     });
@@ -233,6 +250,33 @@ exports.getSelfHomeGoings = async (req, res) => {
       createdAt: { $gte: threeMonthsAgo }
     }).sort({ createdAt: -1 });
     res.json({ success: true, history });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.markHomeGoingReturn = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const now = new Date();
+    const currentTime = now.toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' });
+
+    const record = await HomeGoing.findOneAndUpdate(
+      { _id: id, student: req.user._id, isReturned: false },
+      { 
+        isReturned: true, 
+        returnDate: now, 
+        returnTime: currentTime,
+        status: 'returned'
+      },
+      { new: true }
+    );
+
+    if (!record) {
+      return res.status(404).json({ success: false, message: 'Active record not found or already returned.' });
+    }
+
+    res.json({ success: true, message: 'Welcome back! Return marked.', record });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

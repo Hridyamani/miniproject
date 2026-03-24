@@ -64,7 +64,7 @@ export class StudentDashboardComponent implements OnInit {
 
   updateFoodPreference() {
     if (!['veg', 'non-veg'].includes(this.newFoodType)) return;
-    this.http.post<any>('http://localhost:5000/api/student/food-preference', { foodType: this.newFoodType }, this.headers)
+    this.http.put<any>('http://localhost:5000/api/student/food-preference', { foodType: this.newFoodType }, this.headers)
       .subscribe({
         next: res => {
           alert(res.message);

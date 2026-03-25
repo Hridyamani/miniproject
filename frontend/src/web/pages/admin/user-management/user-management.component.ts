@@ -77,13 +77,17 @@ export class UserManagementComponent implements OnInit {
     const phone = this.userForm.get('phone')?.value || '';
     const admissionNo = this.userForm.get('admissionNo')?.value || '';
 
-    let generatedId = '';
+    let generatedId = this.userForm.get('userId')?.value || '';
+
     if (role === 'student') {
-      if (admissionNo) generatedId = `STU-${admissionNo}`;
+      if (admissionNo) generatedId = `STU-${admissionNo.toUpperCase()}`;
+    } else if (role === 'authority') {
+      // Generate random 4-digit number if not already generated
+      if (!generatedId.startsWith('AUTH-')) {
+        generatedId = `AUTH-${Math.floor(1000 + Math.random() * 9000)}`;
+      }
     } else if (role === 'faculty') {
       if (phone.length >= 4) generatedId = `FAC-${phone.slice(-4)}`;
-    } else if (role === 'authority') {
-      if (phone.length >= 4) generatedId = `AUTH-${phone.slice(-4)}`;
     } else if (role === 'admin') {
       if (phone.length >= 4) generatedId = `ADM-${phone.slice(-4)}`;
     }

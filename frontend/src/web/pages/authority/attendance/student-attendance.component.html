@@ -28,7 +28,9 @@
                         <tbody>
                             <tr *ngFor="let s of students">
                                 <td>
-                                    <strong>{{ s.name }}</strong><br>
+                                    <strong>{{ s.name }}</strong>
+                                    <span class="away-badge" *ngIf="s.isAway">Away</span>
+                                    <br>
                                     <small class="text-muted">{{ s.userId }}</small>
                                 </td>
                                 <td><span class="room-pill">{{ s.roomNumber }}</span></td>

@@ -8,7 +8,7 @@
                 <div class="section-header">
                     <div class="title-group">
                         <h3>Record Home Going</h3>
-                        <p class="subtitle">Log your departure details. Time is captured automatically.</p>
+                        <p class="subtitle">Log your home going details. Time is captured automatically.</p>
                     </div>
                     <i class="bi bi-房屋-fill stat-icon purple-text"></i>
                 </div>
@@ -20,19 +20,19 @@
                             <i class="bi bi-clock-history mr-8"></i>
                             {{ homeGoingForm.leaveDate | date:'dd MMM yyyy, hh:mm a' }}
                         </div>
-                        <p class="hint mt-4">Current system time at departure.</p>
+                        <p class="hint mt-4">Current system time when leaving.</p>
                     </div>
                     
                     <div class="form-group flex-1">
-                        <label class="form-label font-600">Destination / Place</label>
-                        <input type="text" class="form-control modern-input" placeholder="e.g., Home, Ernakulam"
+                        <label class="form-label font-600"> Place </label>
+                        <input type="text" class="form-control modern-input" placeholder=" "
                             [(ngModel)]="homeGoingForm.place" />
                     </div>
                 </div>
 
                 <div class="actions mt-24">
                     <button class="primary-btn w-100" (click)="submitHomeGoing()">
-                        Register Departure <i class="bi bi-geo-alt-fill ml-8"></i>
+                        Mark home going <i class="bi bi-geo-alt-fill ml-8"></i>
                     </button>
                 </div>
             </div>

@@ -17,11 +17,25 @@ const getNextUserId = async (role, admissionNo = null) => {
   if (role === 'student' && admissionNo) {
     return `STU-${admissionNo.toUpperCase().trim()}`;
   }
+  
+  if (role === 'authority') {
+    let uniqueId = '';
+    let exists = true;
+    // Keep trying until we get a unique ID 
+    while (exists) {
+      const random = Math.floor(1000 + Math.random() * 9000);
+      uniqueId = `AUTH-${random}`;
+      const user = await User.findOne({ userId: uniqueId });
+      if (!user) exists = false;
+    }
+    return uniqueId;
+  }
+
   const currentYear = new Date().getFullYear();
   const rolePrefixes = {
     student: 'STU',
     faculty: 'FAC',
-    authority: 'ATH',
+    authority: 'AUTH',
     admin: 'ADM'
   };
   const prefix = rolePrefixes[role] || role.substring(0, 3).toUpperCase();
@@ -132,15 +146,36 @@ exports.getAttendanceReport = async (req, res) => {
       date: searchDate
     }).populate('markedBy', 'name role');
 
+    // Get active homegoings for these students that overlap with searchDate
+    const homeGoings = await HomeGoing.find({
+      status: { $in: ['active', 'approved', 'returned'] },
+      leaveDate: { $lte: searchDate },
+      $or: [
+        { isReturned: false },
+        { returnDate: { $gt: searchDate } }
+      ]
+    });
+
     const report = students.map(s => {
       const att = attendance.find(a => a.student.toString() === s._id.toString());
+      const hasHomeGoing = homeGoings.some(hg => hg.student.toString() === s._id.toString());
+      
+      let status = att ? att.status : 'not marked';
+      let remarks = att?.remarks || '';
+
+      if (hasHomeGoing && status !== 'present') {
+        status = 'absent';
+        remarks = remarks ? `${remarks} (Home Going)` : 'Home Going';
+      }
+
       return {
         _id: s._id,
         name: s.name,
         userId: s.userId,
         roomNumber: s.roomNumber,
         department: s.department,
-        status: att ? att.status : 'not marked',
+        status: status,
+        remarks: remarks,
         markedBy: att?.markedBy?.name || '—',
         markedByRole: att?.markedBy?.role || '—'
       };
@@ -160,31 +195,30 @@ exports.createUser = async (req, res) => {
     if (userData.department) userData.department = userData.department.toUpperCase();
     if (userData.hostelName) userData.hostelName = userData.hostelName.toUpperCase();
 
-    // Authority Registration Rule: Email must exist
+    // Authority Registration Rule: Email must exist for promotion, else Create New
     if (userData.role === 'authority') {
       const existingUser = await User.findOne({ email: userData.email });
-      if (!existingUser) {
-        return res.status(400).json({ message: 'Authority user can only be added if the email already exists in the system.' });
-      }
-      
-      // convert to Block Letters for consistency
-      if (userData.department) existingUser.department = userData.department.toUpperCase();
-      if (userData.hostelName) existingUser.hostelName = userData.hostelName.toUpperCase();
-      
-      existingUser.role = 'authority';
-      existingUser.authorityRole = userData.authorityRole;
-      if (userData.userId) existingUser.userId = userData.userId;
-      if (userData.name) existingUser.name = userData.name;
-      if (userData.phone) existingUser.phone = userData.phone;
-      if (userData.roomNumber) existingUser.roomNumber = userData.roomNumber;
-      
-      await existingUser.save();
+      if (existingUser) {
+        // Promote existing user to Authority
+        if (userData.department) existingUser.department = userData.department.toUpperCase();
+        if (userData.hostelName) existingUser.hostelName = userData.hostelName.toUpperCase();
+        
+        existingUser.role = 'authority';
+        existingUser.authorityRole = userData.authorityRole;
+        if (userData.userId) existingUser.userId = userData.userId;
+        if (userData.name) existingUser.name = userData.name;
+        if (userData.phone) existingUser.phone = userData.phone;
+        if (userData.roomNumber) existingUser.roomNumber = userData.roomNumber;
+        
+        await existingUser.save();
 
-      return res.json({ 
-        success: true, 
-        message: `User ${existingUser.name} has been promoted to Authority role successfully.`,
-        user: { userId: existingUser.userId, name: existingUser.name }
-      });
+        return res.json({ 
+          success: true, 
+          message: `User ${existingUser.name} has been promoted to Authority role successfully.`,
+          user: { userId: existingUser.userId, name: existingUser.name }
+        });
+      }
+      // If user doesn't exist, we fall through and create a brand new one below
     }
 
     // Standard User Creation

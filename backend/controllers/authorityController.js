@@ -93,14 +93,34 @@ exports.markAttendance = async (req, res) => {
 
       let record = await Attendance.findOne({ student: studentId, date: markingDate });
 
-      // FORCE ABSENT if student is currently "Out" (Home Going or Outgoing)
+      // FORCE ABSENT if student was "Out" on the marking date (Home Going or Outgoing)
       let finalStatus = status;
-      const isOut = await Promise.all([
-        HomeGoing.exists({ student: studentId, isReturned: false, status: { $ne: 'cancelled' } }),
-        Outgoing.exists({ student: studentId, isReturned: false })
-      ]);
 
-      if (isOut.some(x => x) && status === 'present') {
+      // Check if they were on HomeGoing on the markingDate
+      const activeHomeGoing = await HomeGoing.exists({
+        student: studentId,
+        status: { $in: ['active', 'approved', 'returned'] },
+        leaveDate: { $lte: markingDate },
+        $or: [
+          { isReturned: false },
+          { returnDate: { $gt: markingDate } }
+        ]
+      });
+
+      // Check if they were on Outgoing on the markingDate (same day)
+      const activeOutgoing = await Outgoing.exists({
+        student: studentId,
+        date: {
+          $gte: markingDate,
+          $lt: new Date(markingDate.getTime() + 24 * 60 * 60 * 1000)
+        },
+        $or: [
+          { isReturned: false },
+          { returnDate: { $gt: markingDate } }
+        ]
+      });
+
+      if (activeHomeGoing || activeOutgoing) {
         finalStatus = 'absent';
       }
 
@@ -188,7 +208,22 @@ exports.getStudents = async (req, res) => {
     const students = await User.find({ role: 'student', isActive: true })
       .select('name roomNumber phone admissionNo semester collegeName hostelName userId email guardiansName guardiansPhone address department')
       .sort({ roomNumber: 1 });
-    res.json({ success: true, students });
+
+    // Identify who is currently away (Home Going or Outgoing)
+    const awayHomeGoings = await HomeGoing.find({ status: { $in: ['active', 'approved'] }, isReturned: false }).select('student');
+    const awayOutgoings = await Outgoing.find({ isReturned: false }).select('student');
+
+    const awayIds = new Set([
+      ...awayHomeGoings.map(h => h.student.toString()),
+      ...awayOutgoings.map(o => o.student.toString())
+    ]);
+
+    const results = students.map(s => ({
+      ...s._doc,
+      isAway: awayIds.has(s._id.toString())
+    }));
+
+    res.json({ success: true, students: results });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -270,7 +305,73 @@ exports.getReports = async (req, res) => {
       date: { $gte: startDate, $lte: endDate }
     }).populate('student', 'name roomNumber department userId').sort({ date: 1, roomNumber: 1 });
 
-    res.json({ success: true, attendance });
+    // Fetch relevant HomeGoings and Outgoings that might cause automatic absences
+    const [homeGoings, outgoings] = await Promise.all([
+      HomeGoing.find({
+        status: { $in: ['active', 'approved', 'returned'] },
+        leaveDate: { $lte: endDate },
+        $or: [
+          { isReturned: false },
+          { returnDate: { $gte: startDate } }
+        ]
+      }),
+      Outgoing.find({
+        date: { $lte: endDate },
+        $or: [
+          { isReturned: false },
+          { returnDate: { $gte: startDate } }
+        ]
+      })
+    ]);
+
+    let finalAttendance = attendance.map(a => a.toObject());
+
+    // Loop through each inmate and each date in the range to synthesize absences if missing
+    const inmates = await User.find({ role: 'student', isActive: true }).select('name roomNumber department userId email');
+    
+    // Only synthesize if the inmate is away on a date and there's no attendance record
+    const daysInRange = [];
+    let curr = new Date(startDate);
+    while (curr <= endDate) {
+      daysInRange.push(new Date(curr));
+      curr.setDate(curr.getDate() + 1);
+    }
+
+    inmates.forEach(student => {
+      daysInRange.forEach(d => {
+        const dStr = d.toISOString().split('T')[0];
+        const hasRecord = finalAttendance.some(a => a.student && a.student._id.toString() === student._id.toString() && new Date(a.date).toISOString().split('T')[0] === dStr);
+        
+        if (!hasRecord) {
+          // Check if away on this date
+          const wasAwayHome = homeGoings.some(hg => {
+            const hgLeave = new Date(hg.leaveDate);
+            const hgReturn = hg.returnDate ? new Date(hg.returnDate) : null;
+            return hg.student.toString() === student._id.toString() &&
+                   d >= hgLeave && (!hgReturn || d <= hgReturn);
+          });
+
+          const wasAwayOut = outgoings.some(og => {
+            const ogDate = new Date(og.date);
+            const ogReturn = og.returnDate ? new Date(og.returnDate) : null;
+            return og.student.toString() === student._id.toString() &&
+                   d.toDateString() === ogDate.toDateString() && (!ogReturn || d <= ogReturn);
+          });
+
+          if (wasAwayHome || wasAwayOut) {
+            finalAttendance.push({
+              student: student,
+              date: d,
+              status: 'absent',
+              remarks: 'Auto-marked: Away',
+              isAutoGenerated: true
+            });
+          }
+        }
+      });
+    });
+
+    res.json({ success: true, attendance: finalAttendance.sort((a,b) => new Date(a.date) - new Date(b.date)) });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

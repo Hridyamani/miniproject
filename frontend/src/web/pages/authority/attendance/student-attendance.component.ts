@@ -33,7 +33,10 @@ export class StudentAttendanceComponent implements OnInit {
     this.loading = true;
     this.http.get<any>('http://localhost:5000/api/authority/students', this.headers).subscribe({
       next: res => {
-        this.students = (res.students || []).map((s: any) => ({ ...s, status: 'present' }));
+        this.students = (res.students || []).map((s: any) => ({ 
+          ...s, 
+          status: s.isAway ? 'absent' : 'present' 
+        }));
         this.loading = false;
       },
       error: () => {

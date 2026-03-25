@@ -107,3 +107,13 @@ input:checked + .slider:before {
 @keyframes spinner-border {
     to { transform: rotate(360deg); }
 }
+
+.away-badge {
+    background-color: #fef3c7;
+    color: #b45309;
+    font-size: 0.7rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    margin-left: 8px;
+    font-weight: 600;
+}

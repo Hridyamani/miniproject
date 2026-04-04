@@ -52,6 +52,11 @@ export class SidebarComponent {
     return !['Floor Secretary', 'Wing Secretary'].includes(role);
   }
 
+  get canAccessRoomAllocation(): boolean {
+    const role = this.authorityRole;
+    return ['Warden', 'Hostel Secretary', 'Resident Tutor'].includes(role);
+  }
+
   get isFloorWingSecretary(): boolean {
     return ['Floor Secretary', 'Wing Secretary'].includes(this.authorityRole);
   }

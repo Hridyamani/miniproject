@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const ctrl = require('../controllers/authorityController');
+const roomCtrl = require('../controllers/roomController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 router.use(protect);
@@ -35,6 +36,17 @@ router.delete('/closed-days/:id', ctrl.deleteClosedDay);
 // Mess Bill
 router.get('/mess-bill-data', ctrl.getMessBillData);
 router.post('/mess-inventory', ctrl.saveMessInventory);
+
+// Room Allocation
+router.get('/rooms', roomCtrl.getRooms);
+router.post('/rooms', roomCtrl.addRoom);
+router.post('/rooms/assign', roomCtrl.assignStudent);
+router.post('/rooms/vacate', roomCtrl.vacateRoom);
+router.get('/rooms/unallocated', roomCtrl.getUnallocatedStudents);
+router.post('/rooms/auto-allocate', roomCtrl.autoAllocate);
+router.get('/rooms/allocation-stats', roomCtrl.getAllocationStats);
+router.get('/rooms/waitlist', roomCtrl.getWaitlist);
+router.post('/rooms/waitlist', roomCtrl.addToWaitlist);
 
 
 module.exports = router;

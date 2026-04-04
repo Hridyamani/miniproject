@@ -101,6 +101,10 @@
             <a class="nav-item" *ngIf="canAccessHostelClosing" routerLinkActive="active" [routerLink]="['/authority/hostel-closing']">
                 <i class="bi bi-calendar-x-fill"></i> Hostel Closing
             </a>
+
+            <a class="nav-item" *ngIf="canAccessRoomAllocation" routerLinkActive="active" [routerLink]="['/authority/room-allocation']">
+                <i class="bi bi-door-closed-fill"></i> Room Allocation
+            </a>
             
             <div class="nav-section-label" *ngIf="canAccessAnnouncements">Others</div>
             <a class="nav-item" *ngIf="canAccessAnnouncements" routerLinkActive="active" [routerLink]="['/authority/notifications']">

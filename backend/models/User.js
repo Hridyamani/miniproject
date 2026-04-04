@@ -42,6 +42,7 @@ const userSchema = new mongoose.Schema({
   semester: { type: String },
   dateOfAdmission: { type: Date },
   roomNumber: { type: String },
+  roomId: { type: mongoose.Schema.Types.ObjectId, ref: 'Room' },
   guardiansName: { type: String },
   guardiansPhone: { type: String },
   branch: { type: String },

@@ -52,6 +52,7 @@ export const WEB_ROUTES: Routes = [
       { path: 'faculty-attendance', loadComponent: () => import('./pages/authority/attendance/faculty-attendance.component').then(m => m.FacultyAttendanceComponent) },
       { path: 'hostel-closing', loadComponent: () => import('./pages/admin/hostel-closing/hostel-closing.component').then(m => m.HostelClosingComponent) },
       { path: 'mess-bill', loadComponent: () => import('./pages/authority/mess-bill/mess-bill.component').then(m => m.MessBillComponent) },
+      { path: 'room-allocation', loadComponent: () => import('./pages/authority/room-allocation/room-allocation.component').then(m => m.RoomAllocationComponent) },
     ]
   },
   {

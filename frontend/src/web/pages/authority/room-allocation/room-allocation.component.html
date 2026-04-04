@@ -1,0 +1,248 @@
+<div class="room-allocation-container">
+    <div class="header-section">
+        <div class="title-area">
+            <h1><i class="bi bi-door-closed-fill"></i> Room Allocation</h1>
+            <p class="text-muted">Manage hostel rooms and student assignments</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn-premium btn-primary" (click)="openAddRoomModal()">
+                <i class="bi bi-plus-lg"></i> Add New Room
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon total"><i class="bi bi-houses"></i></div>
+            <div class="stat-info">
+                <span class="value">{{ stats.totalRooms }}</span>
+                <span class="label">Total Rooms</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon occupied"><i class="bi bi-person-fill-check"></i></div>
+            <div class="stat-info">
+                <span class="value">{{ stats.occupiedSlots }} / {{ stats.totalCapacity }}</span>
+                <span class="label">Total Occupancy</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon available"><i class="bi bi-unlock-fill"></i></div>
+            <div class="stat-info">
+                <span class="value">{{ stats.availableSlots }}</span>
+                <span class="label">Available Slots</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon unallocated"><i class="bi bi-person-fill-exclamation"></i></div>
+            <div class="stat-info">
+                <span class="value">{{ stats.unallocatedStudents }}</span>
+                <span class="label">Unallocated Students</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Allocation Controls -->
+    <div class="allocation-controls">
+        <h3 class="card-title"><i class="bi bi-gear-fill"></i> Smart Allocation</h3>
+        <div class="filters-row">
+            <div class="filter-group">
+                <label>Allocation Strategy</label>
+                <select class="form-select" [(ngModel)]="autoAllocateStrategy">
+                    <option value="same_dept">Same Department (Case 1)</option>
+                    <option value="diff_dept">Different Department (Case 2)</option>
+                    <option value="mixed">Mixed (Case 3)</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Filter Block</label>
+                <input type="text" class="form-control" [(ngModel)]="filterBlock" placeholder="e.g. Block A">
+            </div>
+            <div class="auto-actions">
+                <button class="btn-premium btn-primary mt-auto" (click)="runAutoAllocate()" [disabled]="loading">
+                    <i class="bi bi-lightning-fill"></i> Auto-Allocate
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content-grid">
+        <!-- Room List -->
+        <div class="table-container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="card-title m-0"><i class="bi bi-list-ul"></i> Room Directory</h3>
+                <div class="search-box">
+                    <input type="text" class="form-control" placeholder="Search room no..." [(ngModel)]="roomSearchTerm">
+                </div>
+            </div>
+            <table class="premium-table">
+                <thead>
+                    <tr>
+                        <th>Room No</th>
+                        <th>Type</th>
+                        <th>Capacity</th>
+                        <th>Occupants</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let room of filteredRooms()">
+                        <td><strong>{{ room.roomNo }}</strong></td>
+                        <td>{{ room.type }}</td>
+                        <td>{{ room.capacity }}</td>
+                        <td>
+                            <div class="occupant-list">
+                                <span *ngFor="let s of room.occupants" class="badge badge-outline-purple me-1" [title]="s.department">
+                                    {{ s.name }} ({{ s.admissionNo }})
+                                </span>
+                                <span *ngIf="room.occupants.length === 0" class="text-muted">Empty</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge" [ngClass]="'badge-' + room.status">{{ room.status | uppercase }}</span>
+                        </td>
+                        <td class="action-btns">
+                            <button class="btn-icon btn-icon-view" (click)="viewRoomDetails(room)" title="View Details">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn-icon btn-icon-add" (click)="openAssignStudentModal(room)" 
+                                    *ngIf="room.occupants.length < room.capacity" title="Assign Student">
+                                <i class="bi bi-person-plus"></i>
+                            </button>
+                            <button class="btn-icon btn-icon-view" style="color: #dc3545;" (click)="vacateRoomDialog(room)" *ngIf="room.occupants.length > 0" title="Vacate Students">
+                                <i class="bi bi-person-dash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Right Panel: Unallocated & Waitlist -->
+        <div class="right-panel">
+            <div class="panel-card">
+                <h3 class="card-title"><i class="bi bi-people-fill"></i> Unallocated Students</h3>
+                <div class="list-container mt-3" style="max-height: 400px; overflow-y: auto;">
+                    <div class="list-item" *ngFor="let s of unallocatedStudents">
+                        <div class="student-small-info">
+                            <span class="name">{{ s.name }}</span>
+                            <span class="dept">{{ s.admissionNo }} | {{ s.department }}</span>
+                        </div>
+                        <button class="btn-icon btn-icon-add" (click)="quickAssignDialog(s)">
+                            <i class="bi bi-arrow-right-short"></i>
+                        </button>
+                    </div>
+                    <div *ngIf="unallocatedStudents.length === 0" class="text-center p-4 text-muted">
+                        No unallocated students
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-card">
+                <h3 class="card-title"><i class="bi bi-hourglass-split"></i> Waitlist</h3>
+                <div class="list-container mt-3">
+                    <div class="list-item" *ngFor="let w of waitlist">
+                        <div class="student-small-info">
+                            <span class="name">{{ w.student.name }}</span>
+                            <span class="dept">Priority: {{ w.priority }} | {{ w.student.department }}</span>
+                        </div>
+                        <span class="badge bg-light text-dark">Pending</span>
+                    </div>
+                    <div *ngIf="waitlist.length === 0" class="text-center p-4 text-muted">
+                        No students in waitlist
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Add Room Modal -->
+    <div class="modal-overlay" *ngIf="showAddRoomModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Room</h3>
+                <button class="close-btn" (click)="showAddRoomModal = false">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Room Number</label>
+                    <input type="text" class="form-control" [(ngModel)]="newRoom.roomNo">
+                </div>
+                <div class="form-group">
+                    <label>Type</label>
+                    <select class="form-select" [(ngModel)]="newRoom.type">
+                        <option value="Single">Single</option>
+                        <option value="Double">Double</option>
+                        <option value="Triple">Triple</option>
+                        <option value="Quad">Quad</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Capacity</label>
+                    <input type="number" class="form-control" [(ngModel)]="newRoom.capacity">
+                </div>
+                <div class="form-group">
+                    <label>Block</label>
+                    <input type="text" class="form-control" [(ngModel)]="newRoom.block">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-premium" (click)="showAddRoomModal = false">Cancel</button>
+                <button class="btn-premium btn-primary" (click)="saveRoom()">Save Room</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assign Student Modal -->
+    <div class="modal-overlay" *ngIf="showAssignModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Assign Student to Room {{ selectedRoom?.roomNo }}</h3>
+                <button class="close-btn" (click)="showAssignModal = false">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Select Student</label>
+                    <select class="form-select" [(ngModel)]="selectedStudentId">
+                        <option value="">Choose Student...</option>
+                        <option *ngFor="let s of unallocatedStudents" [value]="s._id">
+                            {{ s.name }} ({{ s.admissionNo }} - {{ s.department }})
+                        </option>
+                    </select>
+                </div>
+                <p class="text-sm text-info" *ngIf="selectedRoom">
+                    <i class="bi bi-info-circle"></i> Capacity: {{ selectedRoom.occupants.length }} / {{ selectedRoom.capacity }}
+                </p>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-premium" (click)="showAssignModal = false">Cancel</button>
+                <button class="btn-premium btn-primary" (click)="confirmAssignment()" [disabled]="!selectedStudentId">Assign</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vacate Modal -->
+    <div class="modal-overlay" *ngIf="showVacateModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Vacate Students - Room {{ selectedRoom?.roomNo }}</h3>
+                <button class="close-btn" (click)="showVacateModal = false">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Select occupant to vacate:</p>
+                <div class="list-container">
+                    <div class="list-item" *ngFor="let s of selectedRoom?.occupants">
+                        <span>{{ s.name }} ({{ s.admissionNo }})</span>
+                        <button class="btn-premium btn-outline btn-sm" style="color: #dc3545; border-color: #dc3545;" (click)="confirmVacate(s._id)">
+                            Vacate
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>

@@ -1,0 +1,212 @@
+erDiagram
+    USER ||--o{ ROOM : "occupies"
+    USER ||--o{ ATTENDANCE : "has"
+    USER ||--o{ HOMEGOING : "creates"
+    USER ||--o{ OUTGOING : "creates"
+    USER ||--o{ MESSCUT : "requests"
+    USER ||--o{ NOTIFICATION : "receives"
+    USER ||--o{ NOTIFICATION : "sends"
+    USER ||--o{ HOSTELSETTINGS : "manages"
+    USER ||--o{ HOSTELCLOSING : "creates"
+    USER ||--o{ HOSTELCLOSEDDAY : "marks"
+    USER ||--o{ MESSINVENTORY : "updates"
+    USER ||--o{ WAITLIST : "joins"
+    USER ||--o{ ARCHIVE : "archived_from"
+
+    USER {
+        ObjectId _id
+        string name
+        string userId UK
+        string phone
+        string email
+        string password
+        string role
+        string department
+        date dateOfBirth
+        string bloodGroup
+        string hostelName
+        string collegeName
+        string admissionNo
+        string semester
+        date dateOfAdmission
+        ObjectId roomId FK
+        string roomNumber
+        string guardiansName
+        string guardiansPhone
+        string branch
+        string address
+        string authorityRole
+        string foodType
+        string nextFoodType
+        date nextFoodTypeEffectiveDate
+        date lastFoodTypeChangedAt
+        string resetPasswordToken
+        date resetPasswordExpires
+        date lastLogin
+        boolean isActive
+        timestamp timestamps
+    }
+
+    ROOM {
+        ObjectId _id
+        string roomNo UK
+        string type
+        number capacity
+        string block
+        string hostel
+        string status
+        string departmentRestriction
+        ObjectId occupants[] FK
+        timestamp timestamps
+    }
+
+    ATTENDANCE {
+        ObjectId _id
+        ObjectId student FK
+        string studentName
+        string roomNumber
+        string admissionNumber
+        date date
+        string status
+        ObjectId markedBy FK
+        string role
+        boolean milkTaken
+        timestamp timestamps
+    }
+
+    HOMEGOING {
+        ObjectId _id
+        ObjectId student FK
+        string studentName
+        string roomNumber
+        date leaveDate
+        string time
+        string place
+        string reason
+        string cancelReason
+        string status
+        boolean isReturned
+        date returnDate
+        string returnTime
+        string recordingType
+        timestamp timestamps
+    }
+
+    OUTGOING {
+        ObjectId _id
+        ObjectId student FK
+        string studentName
+        string roomNumber
+        date date
+        string timeLeaving
+        string place
+        string status
+        string returnTime
+        date returnDate
+        boolean isReturned
+        number gpsLocation_lat
+        number gpsLocation_lng
+        boolean isGpsVerified
+        timestamp timestamps
+    }
+
+    MESSCUT {
+        ObjectId _id
+        ObjectId student FK
+        date startDate
+        date endDate
+        string reason
+        string status
+        timestamp timestamps
+    }
+
+    MESSINVENTORY {
+        ObjectId _id
+        number month
+        number year
+        number leftOutAmount
+        ObjectId updatedBy FK
+        timestamp timestamps
+    }
+
+    NOTIFICATION {
+        ObjectId _id
+        ObjectId user FK
+        string targetRole
+        ObjectId sender FK
+        string title
+        string message
+        string type
+        boolean isRead
+        string pdfUrl
+        timestamp timestamps
+    }
+
+    HOSTELSETTINGS {
+        ObjectId _id
+        string hostelName UK
+        ObjectId admin FK
+        number latitude
+        number longitude
+        number returnRadius
+        number minMessCutDays
+        string openTime
+        string closeTime
+        date foodPreferenceWindow_startDate
+        date foodPreferenceWindow_endDate
+        number foodPreferenceWindow_durationMonths
+        timestamp timestamps
+    }
+
+    HOSTELCLOSING {
+        ObjectId _id
+        date startDate
+        date endDate
+        string reason
+        ObjectId admin FK
+        timestamp timestamps
+    }
+
+    HOSTELCLOSEDDAY {
+        ObjectId _id
+        date date UK
+        ObjectId markedBy FK
+        string reason
+        timestamp timestamps
+    }
+
+    WAITLIST {
+        ObjectId _id
+        ObjectId student FK
+        date requestDate
+        number priority
+        string status
+        timestamp timestamps
+    }
+
+    ARCHIVE {
+        ObjectId _id
+        ObjectId originalId
+        string name
+        string userId
+        string role
+        string email
+        string phone
+        string department
+        string roomNumber
+        string hostelName
+        string admissionNo
+        string semester
+        string guardiansName
+        string guardiansPhone
+        string address
+        string collegeName
+        string gender
+        string bloodGroup
+        date dateOfBirth
+        date dateOfAdmission
+        date archivedAt
+        string archiveReason
+        object data
+        timestamp timestamps
+    }

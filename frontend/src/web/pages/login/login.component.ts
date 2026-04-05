@@ -33,7 +33,6 @@ export class LoginComponent implements OnInit {
     });
   }
 
-
   ngOnInit() {
     // Role is no longer selected beforehand
   }

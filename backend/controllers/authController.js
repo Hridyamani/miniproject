@@ -111,30 +111,42 @@ exports.registerAdmin = async (req, res) => {
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    const user = await User.findOne({ email });
+    const users = await User.find({ email });
 
-    if (!user) {
+    if (!users || users.length === 0) {
       return res.status(404).json({ message: 'No user found with this email' });
     }
 
-    // Generate reset token
-    const resetToken = crypto.randomBytes(20).toString('hex');
-    user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-    user.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+    let accountsHtml = '';
+    let accountsText = '';
 
-    await user.save();
+    for (const user of users) {
+      const resetToken = crypto.randomBytes(20).toString('hex');
+      user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+      user.resetPasswordExpires = Date.now() + 10 * 60 * 1000;
+      await user.save();
 
-    // Create reset password url
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+      const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+      const roleDisplayName = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+      
+      accountsHtml += `
+        <div style="margin-bottom: 20px; padding: 15px; background: #f8fafc; border-left: 4px solid #7C3AED; border-radius: 4px;">
+          <p style="margin: 0 0 5px 0; font-size: 14px; color: #64748b;"><strong>Account Role:</strong> ${roleDisplayName}</p>
+          <p style="margin: 0 0 15px 0; font-size: 14px; color: #64748b;"><strong>User ID:</strong> <span style="color: #0f172a;">${user.userId}</span></p>
+          <a href="${resetUrl}" style="background-color: #7C3AED; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 14px;">Reset Password</a>
+        </div>
+      `;
+      
+      accountsText += `Role: ${roleDisplayName}\nUser ID: ${user.userId}\nReset Link: ${resetUrl}\n\n`;
+    }
 
-    const roleName = user.role.charAt(0).toUpperCase() + user.role.slice(1);
     const subject = 'StaySphere Password Reset Request';
     const message = `Hello,
 
-We received a request to reset the password for your StaySphere ${user.role} account.
-To create a new password, please click the link below:
-${resetUrl}
-This link is valid for 10 minutes.
+We received a request to reset the password for your StaySphere account(s).
+Below are the reset links for the accounts registered with this email. These links are valid for 10 minutes.
+
+${accountsText}
 
 If you did not request a password reset, you can safely ignore this email. Your account will remain unchanged.
 
@@ -145,18 +157,18 @@ StaySphere Support Team`;
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 10px;">
         <h2 style="color: #7C3AED; border-bottom: 2px solid #7C3AED; padding-bottom: 10px;">StaySphere Password Reset</h2>
         <p>Hello,</p>
-        <p>We received a request to reset the password for your <strong>StaySphere ${user.role}</strong> account.</p>
-        <p>To create a new password, please click the button below:</p>
-        <p style="text-align: center; margin: 30px 0;">
-          <a href="${resetUrl}" style="background-color: #7C3AED; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Reset Password</a>
-        </p>
-        <p>Or copy and paste this link into your browser:</p>
-        <p style="word-break: break-all; color: #666;">${resetUrl}</p>
+        <p>We received a request to reset the password for the account(s) associated with this email address.</p>
+        <p>Please click the <strong>Reset Password</strong> button for the specific account you want to reset:</p>
+        
+        <div style="margin: 30px 0;">
+          ${accountsHtml}
+        </div>
+
         <p style="margin-top: 25px; font-size: 0.9em; color: #555;">
-          For security reasons, this link will expire in <strong>30 minutes</strong>.
+          For security reasons, these links will expire in <strong>10 minutes</strong>.
         </p>
         <p style="font-size: 0.9em; color: #555;">
-          If you did not request a password reset, you can safely ignore this email. Your account will remain unchanged.
+          If you did not request a password reset, you can safely ignore this email. Your accounts will remain unchanged.
         </p>
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 0.9em; color: #888;">
           <p>Thank you,<br><strong>StaySphere Support Team</strong></p>
@@ -167,7 +179,7 @@ StaySphere Support Team`;
     try {
       const sendEmail = require('../utils/sendEmail');
       await sendEmail({
-        email: user.email,
+        email: email,
         subject: subject,
         message: message,
         html: html
@@ -178,9 +190,13 @@ StaySphere Support Team`;
         message: 'Reset link sent to email'
       });
     } catch (err) {
-      user.resetPasswordToken = undefined;
-      user.resetPasswordExpires = undefined;
-      await user.save();
+      console.error('Email error:', err);
+      // Clean up tokens on error
+      for (const user of users) {
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+        await user.save();
+      }
       return res.status(500).json({ message: 'Email could not be sent' });
     }
   } catch (error) {

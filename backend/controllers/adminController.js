@@ -196,41 +196,16 @@ exports.createUser = async (req, res) => {
     if (userData.hostelName) userData.hostelName = userData.hostelName.toUpperCase();
 
     // Authority Registration Rule: Email must exist for promotion, else Create New
-    if (userData.role === 'authority') {
-      const existingUser = await User.findOne({ email: userData.email });
-      if (existingUser) {
-        // Promote existing user to Authority
-        if (userData.department) existingUser.department = userData.department.toUpperCase();
-        if (userData.hostelName) existingUser.hostelName = userData.hostelName.toUpperCase();
-        
-        existingUser.role = 'authority';
-        existingUser.authorityRole = userData.authorityRole;
-        if (userData.userId) existingUser.userId = userData.userId;
-        if (userData.name) existingUser.name = userData.name;
-        if (userData.phone) existingUser.phone = userData.phone;
-        if (userData.roomNumber) existingUser.roomNumber = userData.roomNumber;
-        
-        await existingUser.save();
-
-        return res.json({ 
-          success: true, 
-          message: `User ${existingUser.name} has been promoted to Authority role successfully.`,
-          user: { userId: existingUser.userId, name: existingUser.name }
-        });
-      }
-      // If user doesn't exist, we fall through and create a brand new one below
-    }
-
+    // [Modifed] Removed promotion logic. Authority accounts are always created uniquely.
+    
     // Standard User Creation
     if (!userData.userId) {
       userData.userId = await getNextUserId(userData.role, userData.admissionNo);
     }
 
-    const exists = await User.findOne({
-      $or: [{ userId: userData.userId }, { email: userData.email }]
-    });
+    const exists = await User.findOne({ userId: userData.userId });
 
-    if (exists) return res.status(400).json({ message: 'User ID or Email already exists' });
+    if (exists) return res.status(400).json({ message: 'User ID already exists' });
 
     // Auto-Generate Password
     const rawPassword = generatePassword();

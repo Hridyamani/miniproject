@@ -1,0 +1,316 @@
+classDiagram
+    %% Backend Models
+    class User {
+        +ObjectId _id
+        +String name
+        +String userId
+        +String phone
+        +String email
+        +String password
+        +String role
+        +String department
+        +Date dateOfBirth
+        +String bloodGroup
+        +String hostelName
+        +String collegeName
+        +String admissionNo
+        +String semester
+        +Date dateOfAdmission
+        +ObjectId roomId
+        +String roomNumber
+        +String guardiansName
+        +String guardiansPhone
+        +String branch
+        +String address
+        +String authorityRole
+        +String foodType
+        +String nextFoodType
+        +Date nextFoodTypeEffectiveDate
+        +Date lastFoodTypeChangedAt
+        +String resetPasswordToken
+        +Date resetPasswordExpires
+        +Date lastLogin
+        +Boolean isActive
+        +Date createdAt
+        +Date updatedAt
+        +matchPassword(password: String): Boolean
+        +generateResetToken(): String
+    }
+
+    class Room {
+        +ObjectId _id
+        +String roomNo
+        +String type
+        +Number capacity
+        +Array occupants
+        +String block
+        +String hostel
+        +String status
+        +String departmentRestriction
+        +Date createdAt
+        +Date updatedAt
+        +addOccupant(userId: ObjectId): void
+        +removeOccupant(userId: ObjectId): void
+        +isFull(): Boolean
+        +getAvailableCapacity(): Number
+    }
+
+    class Attendance {
+        +ObjectId _id
+        +ObjectId student
+        +String studentName
+        +String roomNumber
+        +String admissionNumber
+        +Date date
+        +String status
+        +ObjectId markedBy
+        +String role
+        +Boolean milkTaken
+        +Date createdAt
+        +Date updatedAt
+        +markPresent(): void
+        +markAbsent(): void
+        +updateMilkStatus(status: Boolean): void
+    }
+
+    class HomeGoing {
+        +ObjectId _id
+        +ObjectId student
+        +String studentName
+        +String roomNumber
+        +Date leaveDate
+        +String time
+        +String place
+        +String reason
+        +String cancelReason
+        +String status
+        +Boolean isReturned
+        +Date returnDate
+        +String returnTime
+        +String recordingType
+        +Date createdAt
+        +Date updatedAt
+        +approve(): void
+        +reject(): void
+        +cancel(): void
+        +markReturned(): void
+    }
+
+    class Outgoing {
+        +ObjectId _id
+        +ObjectId student
+        +String studentName
+        +String roomNumber
+        +Date date
+        +String timeLeaving
+        +String place
+        +String status
+        +String returnTime
+        +Date returnDate
+        +Boolean isReturned
+        +Number gpsLocation_lat
+        +Number gpsLocation_lng
+        +Boolean isGpsVerified
+        +Date createdAt
+        +Date updatedAt
+        +markReturned(): void
+        +updateGpsLocation(lat: Number, lng: Number): void
+        +verifyGps(): void
+    }
+
+    class MessCut {
+        +ObjectId _id
+        +ObjectId student
+        +Date startDate
+        +Date endDate
+        +String reason
+        +String status
+        +Date createdAt
+        +Date updatedAt
+        +approve(): void
+        +reject(): void
+        +calculateDays(): Number
+    }
+
+    class MessInventory {
+        +ObjectId _id
+        +Number month
+        +Number year
+        +Number leftOutAmount
+        +ObjectId updatedBy
+        +Date createdAt
+        +Date updatedAt
+        +updateAmount(amount: Number): void
+        +getMonthlyTotal(): Number
+    }
+
+    class Notification {
+        +ObjectId _id
+        +ObjectId user
+        +String targetRole
+        +ObjectId sender
+        +String title
+        +String message
+        +String type
+        +Boolean isRead
+        +String pdfUrl
+        +Date createdAt
+        +Date updatedAt
+        +markAsRead(): void
+        +sendToRole(role: String): void
+    }
+
+    class HostelSettings {
+        +ObjectId _id
+        +String hostelName
+        +ObjectId admin
+        +Number latitude
+        +Number longitude
+        +Number returnRadius
+        +Number minMessCutDays
+        +String openTime
+        +String closeTime
+        +Object foodPreferenceWindow
+        +Date createdAt
+        +Date updatedAt
+        +updateLocation(lat: Number, lng: Number): void
+        +updateTimings(open: String, close: String): void
+    }
+
+    class HostelClosing {
+        +ObjectId _id
+        +Date startDate
+        +Date endDate
+        +String reason
+        +ObjectId admin
+        +Date createdAt
+        +Date updatedAt
+        +getDuration(): Number
+        +isActive(): Boolean
+    }
+
+    class HostelClosedDay {
+        +ObjectId _id
+        +Date date
+        +ObjectId markedBy
+        +String reason
+        +Date createdAt
+        +Date updatedAt
+        +isHoliday(): Boolean
+    }
+
+    class Waitlist {
+        +ObjectId _id
+        +ObjectId student
+        +Date requestDate
+        +Number priority
+        +String status
+        +Date createdAt
+        +Date updatedAt
+        +allocate(): void
+        +cancel(): void
+        +updatePriority(priority: Number): void
+    }
+
+    class Archive {
+        +ObjectId _id
+        +ObjectId originalId
+        +String name
+        +String userId
+        +String role
+        +String email
+        +String phone
+        +String department
+        +String roomNumber
+        +String hostelName
+        +String admissionNo
+        +String semester
+        +String guardiansName
+        +String guardiansPhone
+        +String address
+        +String collegeName
+        +String gender
+        +String bloodGroup
+        +Date dateOfBirth
+        +Date dateOfAdmission
+        +Date archivedAt
+        +String archiveReason
+        +Object data
+        +Date createdAt
+        +Date updatedAt
+        +restore(): User
+    }
+
+    %% Frontend Services
+    class AuthService {
+        +String apiUrl
+        +BehaviorSubject user$
+        +login(credentials: any): Observable
+        +register(userData: any): Observable
+        +logout(): void
+        +isLoggedIn(): Boolean
+        +getRole(): String
+        +getToken(): String
+        +getUserFromStorage(): any
+        +userValue: any
+    }
+
+    class StudentService {
+        +String api
+        +getProfile(): Observable
+        +updateProfile(data: any): Observable
+        +getAttendance(month?: Number, year?: Number): Observable
+        +applyMessCut(data: any): Observable
+        +getMessCuts(): Observable
+        +requestHomeGoing(data: any): Observable
+        +getHomeGoingRequests(): Observable
+        +recordOutgoing(data: any): Observable
+        +getOutgoingRecords(): Observable
+    }
+
+    class AuthorityService {
+        +String apiUrl
+        +getRooms(): Observable
+        +addRoom(room: any): Observable
+        +updateRoom(id: String, room: any): Observable
+        +deleteRoom(id: String): Observable
+        +assignStudent(studentId: String, roomId: String): Observable
+        +vacateRoom(studentId: String): Observable
+        +getUnallocatedStudents(): Observable
+        +getAttendanceRecords(): Observable
+        +markAttendance(data: any): Observable
+        +getMessCuts(): Observable
+        +approveMessCut(id: String): Observable
+        +rejectMessCut(id: String): Observable
+    }
+
+    %% Guards and Interceptors
+    class AuthGuard {
+        +canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Boolean
+    }
+
+    class AuthInterceptor {
+        +intercept(request: HttpRequest, next: HttpHandler): Observable
+    }
+
+    %% Relationships
+    User ||--o{ Room : occupies
+    User ||--o{ Attendance : has
+    User ||--o{ HomeGoing : creates
+    User ||--o{ Outgoing : creates
+    User ||--o{ MessCut : requests
+    User ||--o{ Notification : receives/sends
+    User ||--o{ HostelSettings : manages
+    User ||--o{ HostelClosing : creates
+    User ||--o{ HostelClosedDay : marks
+    User ||--o{ MessInventory : updates
+    User ||--o{ Waitlist : joins
+    User ||--o{ Archive : archived_from
+
+    Room ||--o{ User : contains
+
+    AuthService --> User : manages
+    StudentService --> User : serves
+    AuthorityService --> User : manages
+    AuthGuard --> AuthService : uses
+    AuthInterceptor --> AuthService : uses

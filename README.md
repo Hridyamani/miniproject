@@ -1,11 +1,9 @@
-# StaySphere 🏨
+# StaySphere 
 > **Hostel Management System**
 >
 > A premium, full-stack, state-of-the-art web application designed to streamline and automate hostel administration, room allocation, mess management, and attendee tracking for Students, Faculty, Admin, and Authority roles.
 
----
-
-## 🌟 Key Features
+##  Key Features
 
 ### 👤 Student Dashboard
 * **Real-time Status**: Overview of attendance, mess cuts, and active room allocations.
@@ -81,7 +79,7 @@ miniproject-1/
 
 ---
 
-## 🚀 Setup & Installation
+## Setup & Installation
 
 ### Prerequisites
 * [Node.js](https://nodejs.org/) (v18+ recommended)

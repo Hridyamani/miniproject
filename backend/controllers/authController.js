@@ -110,41 +110,49 @@ exports.registerAdmin = async (req, res) => {
 // Forgot Password
 exports.forgotPassword = async (req, res) => {
   try {
-    const { email } = req.body;
-    const users = await User.find({ email });
+    const { email, userId } = req.body;
 
-    if (!users || users.length === 0) {
-      return res.status(404).json({ message: 'No user found with this email' });
+    if (!userId) {
+      return res.status(400).json({ message: 'User ID is required' });
     }
 
-    let accountsHtml = '';
-    let accountsText = '';
-
-    for (const user of users) {
-      const resetToken = crypto.randomBytes(20).toString('hex');
-      user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-      user.resetPasswordExpires = Date.now() + 10 * 60 * 1000;
-      await user.save();
-
-      const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
-      const roleDisplayName = user.role.charAt(0).toUpperCase() + user.role.slice(1);
-      
-      accountsHtml += `
-        <div style="margin-bottom: 20px; padding: 15px; background: #f8fafc; border-left: 4px solid #7C3AED; border-radius: 4px;">
-          <p style="margin: 0 0 5px 0; font-size: 14px; color: #64748b;"><strong>Account Role:</strong> ${roleDisplayName}</p>
-          <p style="margin: 0 0 15px 0; font-size: 14px; color: #64748b;"><strong>User ID:</strong> <span style="color: #0f172a;">${user.userId}</span></p>
-          <a href="${resetUrl}" style="background-color: #7C3AED; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 14px;">Reset Password</a>
-        </div>
-      `;
-      
-      accountsText += `Role: ${roleDisplayName}\nUser ID: ${user.userId}\nReset Link: ${resetUrl}\n\n`;
+    const user = await User.findOne({ userId });
+    if (!user) {
+      return res.status(404).json({ message: 'No user found with this User ID' });
     }
+
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+
+    if (user.email.toLowerCase() !== email.toLowerCase()) {
+      return res.status(400).json({ message: 'Email does not match this User ID' });
+    }
+
+    const resetToken = crypto.randomBytes(20).toString('hex');
+    user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    user.resetPasswordExpires = Date.now() + 10 * 60 * 1000;
+    await user.save();
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
+    const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
+    const roleDisplayName = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+
+    const accountsHtml = `
+      <div style="margin-bottom: 20px; padding: 15px; background: #f8fafc; border-left: 4px solid #7C3AED; border-radius: 4px;">
+        <p style="margin: 0 0 5px 0; font-size: 14px; color: #64748b;"><strong>Account Role:</strong> ${roleDisplayName}</p>
+        <p style="margin: 0 0 15px 0; font-size: 14px; color: #64748b;"><strong>User ID:</strong> <span style="color: #0f172a;">${user.userId}</span></p>
+        <a href="${resetUrl}" style="background-color: #7C3AED; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 14px;">Reset Password</a>
+      </div>
+    `;
+
+    const accountsText = `Role: ${roleDisplayName}\nUser ID: ${user.userId}\nReset Link: ${resetUrl}\n\n`;
 
     const subject = 'StaySphere Password Reset Request';
-    const message = `Hello,
+    const message = `Hello ${user.name},
 
-We received a request to reset the password for your StaySphere account(s).
-Below are the reset links for the accounts registered with this email. These links are valid for 10 minutes.
+We received a request to reset the password for your StaySphere account.
+Below is the reset link for your account. This link is valid for 10 minutes.
 
 ${accountsText}
 
@@ -156,19 +164,19 @@ StaySphere Support Team`;
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 10px;">
         <h2 style="color: #7C3AED; border-bottom: 2px solid #7C3AED; padding-bottom: 10px;">StaySphere Password Reset</h2>
-        <p>Hello,</p>
-        <p>We received a request to reset the password for the account(s) associated with this email address.</p>
-        <p>Please click the <strong>Reset Password</strong> button for the specific account you want to reset:</p>
+        <p>Hello ${user.name},</p>
+        <p>We received a request to reset the password for the account associated with this email address.</p>
+        <p>Please click the <strong>Reset Password</strong> button below to reset your password:</p>
         
         <div style="margin: 30px 0;">
           ${accountsHtml}
         </div>
 
         <p style="margin-top: 25px; font-size: 0.9em; color: #555;">
-          For security reasons, these links will expire in <strong>10 minutes</strong>.
+          For security reasons, this link will expire in <strong>10 minutes</strong>.
         </p>
         <p style="font-size: 0.9em; color: #555;">
-          If you did not request a password reset, you can safely ignore this email. Your accounts will remain unchanged.
+          If you did not request a password reset, you can safely ignore this email. Your account will remain unchanged.
         </p>
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 0.9em; color: #888;">
           <p>Thank you,<br><strong>StaySphere Support Team</strong></p>
@@ -187,16 +195,14 @@ StaySphere Support Team`;
 
       res.json({
         success: true,
-        message: 'Reset link sent to email'
+        message: 'Reset link sent to registered email'
       });
     } catch (err) {
       console.error('Email error:', err);
       // Clean up tokens on error
-      for (const user of users) {
-        user.resetPasswordToken = undefined;
-        user.resetPasswordExpires = undefined;
-        await user.save();
-      }
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpires = undefined;
+      await user.save();
       return res.status(500).json({ message: 'Email could not be sent' });
     }
   } catch (error) {

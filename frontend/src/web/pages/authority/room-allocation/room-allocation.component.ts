@@ -1,12 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { AuthorityService } from '../../../services/authority.service';
+import { SidebarComponent } from '../../../components/sidebar/sidebar.component';
+import { TopbarComponent } from '../../../components/topbar/topbar.component';
 
 @Component({
   selector: 'app-room-allocation',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SidebarComponent, TopbarComponent, RouterModule],
   templateUrl: './room-allocation.component.html',
   styleUrls: ['./room-allocation.component.css']
 })
@@ -159,6 +162,6 @@ export class RoomAllocationComponent implements OnInit {
 
   viewRoomDetails(room: any) {
     // Placeholder for more detailed view or history
-    alert(`Room ${room.roomNo} Details:\nType: ${room.type}\nBlock: ${room.block || 'N/A'}\nOccupants: ${room.occupants.length}/${room.capacity}`);
+    alert(`Room ${room.roomNo} Details:\nType: ${room.type}\nFloor: ${room.block || 'N/A'}\nOccupants: ${room.occupants.length}/${room.capacity}`);
   }
 }

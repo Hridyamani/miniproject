@@ -4,13 +4,19 @@
         <web-topbar [pageTitle]="'Home Going Records'" [userName]="user?.name || 'Faculty'"></web-topbar>
         <main class="page-content animate-fade-in">
 
+            <!-- Status Alerts -->
+            <div *ngIf="msg" class="alert-banner mb-24 animate-slide-up" [ngClass]="msgType" style="display:flex; align-items:center; gap:10px; padding:14px 20px; border-radius:14px; font-size:13px; font-weight:600; margin-bottom: 24px;" [style.background]="msgType === 'success' ? '#ecfdf5' : '#fef2f2'" [style.color]="msgType === 'success' ? '#047857' : '#b91c1c'" [style.border]="msgType === 'success' ? '1.5px solid #a7f3d0' : '1.5px solid #fca5a5'">
+                <i [class]="msgType === 'success' ? 'bi bi-check-circle-fill' : 'bi bi-exclamation-triangle-fill'"></i>
+                {{ msg }}
+            </div>
+
             <div class="card premium-card animate-slide-up">
                 <div class="section-header">
                     <div class="title-group">
                         <h3>Record Home Going</h3>
                         <p class="subtitle">Log your home going details. Time is captured automatically.</p>
                     </div>
-                    <i class="bi bi-房屋-fill stat-icon purple-text"></i>
+                    <i class="bi bi-house-fill stat-icon purple-text"></i>
                 </div>
 
                 <div class="form-row mt-16">

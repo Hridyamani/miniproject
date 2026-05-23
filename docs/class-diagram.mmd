@@ -241,58 +241,6 @@ classDiagram
         +restore(): User
     }
 
-    %% Frontend Services
-    class AuthService {
-        +String apiUrl
-        +BehaviorSubject user$
-        +login(credentials: any): Observable
-        +register(userData: any): Observable
-        +logout(): void
-        +isLoggedIn(): Boolean
-        +getRole(): String
-        +getToken(): String
-        +getUserFromStorage(): any
-        +userValue: any
-    }
-
-    class StudentService {
-        +String api
-        +getProfile(): Observable
-        +updateProfile(data: any): Observable
-        +getAttendance(month?: Number, year?: Number): Observable
-        +applyMessCut(data: any): Observable
-        +getMessCuts(): Observable
-        +requestHomeGoing(data: any): Observable
-        +getHomeGoingRequests(): Observable
-        +recordOutgoing(data: any): Observable
-        +getOutgoingRecords(): Observable
-    }
-
-    class AuthorityService {
-        +String apiUrl
-        +getRooms(): Observable
-        +addRoom(room: any): Observable
-        +updateRoom(id: String, room: any): Observable
-        +deleteRoom(id: String): Observable
-        +assignStudent(studentId: String, roomId: String): Observable
-        +vacateRoom(studentId: String): Observable
-        +getUnallocatedStudents(): Observable
-        +getAttendanceRecords(): Observable
-        +markAttendance(data: any): Observable
-        +getMessCuts(): Observable
-        +approveMessCut(id: String): Observable
-        +rejectMessCut(id: String): Observable
-    }
-
-    %% Guards and Interceptors
-    class AuthGuard {
-        +canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Boolean
-    }
-
-    class AuthInterceptor {
-        +intercept(request: HttpRequest, next: HttpHandler): Observable
-    }
-
     %% Relationships
     User ||--o{ Room : occupies
     User ||--o{ Attendance : has
@@ -308,9 +256,3 @@ classDiagram
     User ||--o{ Archive : archived_from
 
     Room ||--o{ User : contains
-
-    AuthService --> User : manages
-    StudentService --> User : serves
-    AuthorityService --> User : manages
-    AuthGuard --> AuthService : uses
-    AuthInterceptor --> AuthService : uses

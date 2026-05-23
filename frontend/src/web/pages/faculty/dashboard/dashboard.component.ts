@@ -83,10 +83,16 @@ export class FacultyDashboardComponent implements OnInit {
   }
 
   loadStats() {
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+
     this.http.get<any>('http://localhost:5000/api/faculty/attendance', this.headers).subscribe({
       next: (res) => {
         const history = res.history || [];
-        this.stats.attendanceCount = history.filter((a: any) => a.status === 'present').length;
+        this.stats.attendanceCount = history.filter((a: any) => {
+          const d = new Date(a.date);
+          return a.status === 'present' && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+        }).length;
       }
     });
 
@@ -96,11 +102,16 @@ export class FacultyDashboardComponent implements OnInit {
         let totalDays = 0;
         history.forEach((m: any) => {
           if (m.status === 'approved') {
-            const start = new Date(m.startDate);
+            let curr = new Date(m.startDate);
             const end = new Date(m.endDate);
-            const diffTime = Math.abs(end.getTime() - start.getTime());
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-            totalDays += diffDays;
+            curr.setHours(0, 0, 0, 0);
+            end.setHours(0, 0, 0, 0);
+            while (curr <= end) {
+              if (curr.getMonth() === currentMonth && curr.getFullYear() === currentYear) {
+                totalDays++;
+              }
+              curr.setDate(curr.getDate() + 1);
+            }
           }
         });
         this.stats.messCutCount = totalDays;
@@ -109,7 +120,11 @@ export class FacultyDashboardComponent implements OnInit {
 
     this.http.get<any>('http://localhost:5000/api/faculty/home-going', this.headers).subscribe({
       next: (res) => {
-        this.stats.homeGoingCount = (res.history || []).length;
+        const history = res.history || [];
+        this.stats.homeGoingCount = history.filter((hg: any) => {
+          const d = new Date(hg.leaveDate);
+          return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+        }).length;
       }
     });
   }

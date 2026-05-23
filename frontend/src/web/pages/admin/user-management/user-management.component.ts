@@ -263,7 +263,21 @@ export class UserManagementComponent implements OnInit {
 
   // Bulk Upload Methods
   downloadTemplate() {
-    window.open('http://localhost:5000/api/admin/students/download-template', '_blank');
+    this.http.get('http://localhost:5000/api/admin/students/download-template', { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Student_Upload_Template.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: (err) => {
+        alert('Failed to download template. Please try again.');
+      }
+    });
   }
 
   openBulkUpload() {

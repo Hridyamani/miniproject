@@ -75,11 +75,17 @@ export class StudentDashboardComponent implements OnInit {
   }
 
   loadStats() {
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+
     // Attendance
     this.http.get<any>('http://localhost:5000/api/student/attendance', this.headers).subscribe({
       next: res => {
         if (res.attendance && res.attendance.length > 0) {
-          this.attendanceDays = res.attendance.filter((a: any) => a.status === 'present').length;
+          this.attendanceDays = res.attendance.filter((a: any) => {
+            const d = new Date(a.date);
+            return a.status === 'present' && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+          }).length;
         }
       }
     });
@@ -88,13 +94,20 @@ export class StudentDashboardComponent implements OnInit {
     this.http.get<any>('http://localhost:5000/api/student/mess-cut', this.headers).subscribe({
       next: res => {
         const approved = res.messCuts.filter((m: any) => m.status === 'approved');
-        this.messCutDays = approved.reduce((sum: number, m: any) => {
-          const start = new Date(m.startDate);
+        let totalDays = 0;
+        approved.forEach((m: any) => {
+          let curr = new Date(m.startDate);
           const end = new Date(m.endDate);
-          const diffTime = Math.abs(end.getTime() - start.getTime());
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-          return sum + diffDays;
-        }, 0);
+          curr.setHours(0, 0, 0, 0);
+          end.setHours(0, 0, 0, 0);
+          while (curr <= end) {
+            if (curr.getMonth() === currentMonth && curr.getFullYear() === currentYear) {
+              totalDays++;
+            }
+            curr.setDate(curr.getDate() + 1);
+          }
+        });
+        this.messCutDays = totalDays;
       }
     });
 
@@ -102,8 +115,15 @@ export class StudentDashboardComponent implements OnInit {
     this.http.get<any>('http://localhost:5000/api/student/home-going', this.headers).subscribe({
       next: res => {
         if (res.homeGoings && res.homeGoings.length > 0) {
-          const latest = res.homeGoings[0];
-          this.homeGoingStatus = latest.status.charAt(0).toUpperCase() + latest.status.slice(1);
+          const currentMonthHG = res.homeGoings.find((hg: any) => {
+            const d = new Date(hg.leaveDate);
+            return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+          });
+          if (currentMonthHG) {
+            this.homeGoingStatus = currentMonthHG.status.charAt(0).toUpperCase() + currentMonthHG.status.slice(1);
+          } else {
+            this.homeGoingStatus = 'No Requests';
+          }
         } else {
           this.homeGoingStatus = 'No Requests';
         }

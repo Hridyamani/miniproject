@@ -167,6 +167,30 @@ exports.requestMessCut = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Start date must be before end date.' });
     }
 
+    // Validation: Start date must be at least tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+
+    const start = new Date(startDate);
+    if (start < tomorrow) {
+      return res.status(400).json({ success: false, message: 'Mess cut can only start from tomorrow onwards.' });
+    }
+
+    // Validation: Minimum days check from HostelSettings
+    const HostelSettings = require('../models/HostelSettings');
+    const settings = await HostelSettings.findOne({ 
+      hostelName: { $regex: new RegExp(`^${req.user.hostelName}$`, 'i') } 
+    });
+    const minDays = settings?.minMessCutDays || 3;
+
+    const diffTime = Math.abs(new Date(endDate) - new Date(startDate));
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+    if (diffDays < minDays) {
+      return res.status(400).json({ success: false, message: `Mess cut must be for at least ${minDays} days.` });
+    }
+
     // Check overlap
     const existingOverlap = await MessCut.findOne({
       student: req.user._id,
@@ -188,7 +212,7 @@ exports.requestMessCut = async (req, res) => {
       startDate: new Date(startDate),
       endDate: new Date(endDate),
       reason,
-      status: 'pending'
+      status: 'approved'
     });
     await messCut.save();
     res.json({ success: true, message: 'Mess cut request submitted !! ', messCut });

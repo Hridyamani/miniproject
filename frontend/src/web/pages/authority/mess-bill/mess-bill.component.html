@@ -122,7 +122,10 @@
                             <small class="text-muted">Stock amount left in previous months. This is added to your total consumption.</small>
                         </div>
                         <div class="col-md-4 text-end">
-                            <h4 class="mb-0 text-primary">₹{{previousMonthLeftOut | number:'1.2-2'}}</h4>
+                            <div style="display: inline-flex; align-items: center; gap: 8px; justify-content: flex-end; width: 100%;">
+                                <span class="text-primary fw-bold" style="font-size: 1.25rem;">₹</span>
+                                <input type="number" class="form-control text-primary fw-bold text-end" [(ngModel)]="previousMonthLeftOut" style="max-width: 150px; font-size: 1.25rem; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 4px 8px; outline: none; background: white;" />
+                            </div>
                         </div>
                     </div>
 
@@ -223,9 +226,14 @@
                     <button class="btn btn-outline-secondary btn-lg px-4" (click)="stage = 4">
                         <i class="bi bi-arrow-left me-2"></i> Edit & Review Details
                     </button>
-                    <button class="btn btn-primary-fancy btn-lg px-5 shadow-sm" (click)="printReport()">
-                        <i class="bi bi-download me-2"></i> Print Bill Report
-                    </button>
+                    <div class="d-flex gap-3">
+                        <button class="btn btn-primary-fancy btn-lg px-5 shadow-sm" (click)="printReport()">
+                            <i class="bi bi-download me-2"></i> Print Bill Report
+                        </button>
+                        <button class="btn btn-success btn-lg px-5 shadow-sm" routerLink="/authority/dashboard" style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600; padding: 12px 28px; border-radius: 10px;">
+                            <i class="bi bi-check-lg"></i> Finish
+                        </button>
+                    </div>
                 </div>
             </div>
 

@@ -15,3 +15,7 @@ build/
 
 frontend/.angular/
 backend/.angular/
+
+# Uploaded Files
+backend/uploads/*
+!backend/uploads/.gitkeep

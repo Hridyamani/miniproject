@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { RouterModule } from '@angular/router';
 import { SidebarComponent } from '../../../components/sidebar/sidebar.component';
 import { TopbarComponent } from '../../../components/topbar/topbar.component';
 import { AuthService } from '../../../services/auth.service';
@@ -9,7 +10,7 @@ import { AuthService } from '../../../services/auth.service';
 @Component({
   selector: 'web-mess-bill',
   standalone: true,
-  imports: [CommonModule, FormsModule, SidebarComponent, TopbarComponent],
+  imports: [CommonModule, FormsModule, SidebarComponent, TopbarComponent, RouterModule],
   templateUrl: './mess-bill.component.html',
   styleUrls: ['./mess-bill.component.css']
 })
@@ -75,15 +76,14 @@ export class MessBillComponent implements OnInit {
 
   // Navigation
   goToB() { if (this.bills.length > 0) this.stage = 2; else alert('Add at least one bill'); }
-  goToC() { this.stage = 3; }
-  goToD() {
+  goToC() {
     this.loading = true;
     this.http.get<any>(`http://localhost:5000/api/authority/mess-bill-data?month=${this.selectedMonth}&year=${this.selectedYear}`, this.headers)
       .subscribe({
         next: (res) => {
           this.allInmates = res.data || [];
           this.previousMonthLeftOut = res.previousLeftOut || 0;
-          this.stage = 4;
+          this.stage = 3;
           this.loading = false;
         },
         error: () => {
@@ -91,6 +91,9 @@ export class MessBillComponent implements OnInit {
           this.loading = false;
         }
       });
+  }
+  goToD() {
+    this.stage = 4;
   }
 
   dailyMilkRate: number = 0;

@@ -13,12 +13,13 @@ exports.getRooms = async (req, res) => {
 
 exports.addRoom = async (req, res) => {
   try {
-    const { roomNo, type, capacity, block, hostel } = req.body;
+    const { roomNo, type, capacity, block, floor, hostel } = req.body;
     const existingRoom = await Room.findOne({ roomNo });
     if (existingRoom) {
       return res.status(400).json({ message: 'Room already exists' });
     }
-    const room = new Room({ roomNo, type, capacity, block, hostel });
+    const roomBlock = floor || block;
+    const room = new Room({ roomNo, type, capacity, block: roomBlock, hostel });
     await room.save();
     res.status(201).json({ success: true, room });
   } catch (error) {
@@ -103,7 +104,7 @@ exports.getUnallocatedStudents = async (req, res) => {
 
 exports.autoAllocate = async (req, res) => {
   try {
-    const { strategy, block, hostel } = req.body;
+    const { strategy, block, floor, hostel } = req.body;
     // strategy: 'same_dept', 'diff_dept', 'mixed'
     
     const unallocated = await User.find({
@@ -117,9 +118,16 @@ exports.autoAllocate = async (req, res) => {
     }
 
     const query = { status: 'available' };
-    if (block) query.block = block;
+    const filterVal = floor || block;
+    if (filterVal) query.block = filterVal;
     if (hostel) query.hostel = hostel;
     let rooms = await Room.find(query);
+
+    // Keep only rooms that are not full
+    rooms = rooms.filter(r => r.occupants.length < r.capacity);
+
+    // Sort rooms to fill rooms with most occupants first (partially filled rooms)
+    rooms.sort((a, b) => b.occupants.length - a.occupants.length);
 
     let allocatedCount = 0;
 

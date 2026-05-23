@@ -17,8 +17,13 @@ export class FacultyMessCutComponent implements OnInit {
   user: any;
   messCutHistory: any[] = [];
   messCutForm = { startDate: '', endDate: '' };
+  minDate = '';
 
-  constructor(private http: HttpClient, private auth: AuthService) { }
+  constructor(private http: HttpClient, private auth: AuthService) {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    this.minDate = tomorrow.toISOString().split('T')[0];
+  }
 
   ngOnInit() {
     this.user = this.auth.userValue;
@@ -40,6 +45,14 @@ export class FacultyMessCutComponent implements OnInit {
 
     const start = new Date(this.messCutForm.startDate);
     const end = new Date(this.messCutForm.endDate);
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+
+    if (start < tomorrow) {
+      return alert('Mess cut can only start from tomorrow onwards.');
+    }
 
     if (start >= end) {
       return alert('Start date must be before end date.');

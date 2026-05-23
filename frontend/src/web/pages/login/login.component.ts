@@ -18,6 +18,7 @@ export class LoginComponent implements OnInit {
   showPassword = false;
 
   showForgotModal = false;
+  resetUserId = '';
   resetEmail = '';
   resetMsg = '';
   isResetError = false;
@@ -55,9 +56,9 @@ export class LoginComponent implements OnInit {
   }
 
   onForgotSubmit() {
-    this.authService.forgotPassword(this.resetEmail).subscribe({
-      next: (res) => {
-        this.resetMsg = 'Check your inbox! We sent a reset link.';
+    this.authService.forgotPassword(this.resetEmail, this.resetUserId).subscribe({
+      next: (res: any) => {
+        this.resetMsg = res.message || 'Check your inbox! We sent a reset link.';
         this.isResetError = false;
       },
       error: (err) => {

@@ -16,11 +16,11 @@
                 <div class="form-row mt-16">
                     <div class="form-group flex-1">
                         <label class="form-label font-600">From Date</label>
-                        <input type="date" class="form-control modern-input" [(ngModel)]="messCutForm.startDate" />
+                        <input type="date" class="form-control modern-input" [(ngModel)]="messCutForm.startDate" [min]="minDate" />
                     </div>
                     <div class="form-group flex-1">
                         <label class="form-label font-600">To Date</label>
-                        <input type="date" class="form-control modern-input" [(ngModel)]="messCutForm.endDate" />
+                        <input type="date" class="form-control modern-input" [(ngModel)]="messCutForm.endDate" [min]="minDate" />
                     </div>
                 </div>
 
@@ -28,7 +28,7 @@
                     <button class="primary-btn w-100 btn-orange" (click)="submitMessCut()">
                         Submit Mess Cut Request <i class="bi bi-send-fill ml-8"></i>
                     </button>
-                    <p class="hint mt-8 text-center text-muted small">Requests are sent to the authority for verification.</p>
+                    <p class="hint mt-8 text-center text-muted small">Mess cuts applied are automatically approved if rules and constraints are met.</p>
                 </div>
             </div>
 

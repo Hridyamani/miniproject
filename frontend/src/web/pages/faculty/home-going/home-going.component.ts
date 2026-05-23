@@ -18,6 +18,8 @@ export class FacultyHomeGoingComponent implements OnInit {
   homeGoingHistory: any[] = [];
   homeGoingForm = { leaveDate: this.getCurrentDateTime(), place: '' };
   minDate = new Date().toISOString().split('T')[0];
+  msg = '';
+  msgType = '';
 
   constructor(private http: HttpClient, private auth: AuthService) { }
 
@@ -43,26 +45,38 @@ export class FacultyHomeGoingComponent implements OnInit {
 
   submitHomeGoing() {
     if (!this.homeGoingForm.leaveDate || !this.homeGoingForm.place) {
-      return alert('Please fill in both leave date and destination');
+      this.msg = 'Please fill in both leave date and destination';
+      this.msgType = 'error';
+      return;
     }
 
+    this.msg = '';
     this.http.post('http://localhost:5000/api/faculty/home-going', this.homeGoingForm, this.headers).subscribe({
-      next: () => {
-        alert('Home going recorded successfully');
+      next: (res: any) => {
+        this.msg = res.message || 'Home going recorded successfully';
+        this.msgType = 'success';
         this.homeGoingForm = { leaveDate: this.getCurrentDateTime(), place: '' };
         this.loadHomeGoings();
       },
-      error: (err) => alert(err.error?.message || 'Submission failed')
+      error: (err) => {
+        this.msg = err.error?.message || 'Submission failed';
+        this.msgType = 'error';
+      }
     });
   }
 
   markReturn(id: string) {
+    this.msg = '';
     this.http.put(`http://localhost:5000/api/faculty/home-going/${id}/return`, {}, this.headers).subscribe({
       next: (res: any) => {
-        alert(res.message);
+        this.msg = res.message || 'Welcome back! Return marked.';
+        this.msgType = 'success';
         this.loadHomeGoings();
       },
-      error: (err) => alert(err.error?.message || 'Return marking failed')
+      error: (err) => {
+        this.msg = err.error?.message || 'Return marking failed';
+        this.msgType = 'error';
+      }
     });
   }
 }
